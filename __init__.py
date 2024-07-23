@@ -1,3 +1,3 @@
-from .nodes import *
+from .diffusers_in_comfy import *
 
-__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
+nodes = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
