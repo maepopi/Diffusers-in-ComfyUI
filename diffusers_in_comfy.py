@@ -149,7 +149,7 @@ class BLoRALoader:
                 "style_lora_name" : (folder_paths.get_filename_list("loras"),),
                 "style_lora_scale" : ("FLOAT", {"default": 1.1, "min": 0.0, "max": 1.1, "step":0.1, "round": 0.01}),
                 "content_lora_name" : (folder_paths.get_filename_list("loras"),),
-                "content_lora_scale" : ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.1, "step":0.1, "round": 0.01}),
+                "content_lora_scale" : ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step":0.1, "round": 0.01}),
               
         }}
     
@@ -179,7 +179,12 @@ class BLoRALoader:
             raise type(e)(f'failed to scale_lora, due to: {e}')
 
 
-    def load_b_lora_to_unet(self, pipeline, style_lora_name, style_lora_scale, content_lora_name, content_lora_scale):
+    def load_b_lora_to_unet(self, 
+                            pipeline, 
+                            style_lora_name, 
+                            content_lora_name,
+                            style_lora_scale=1.,
+                            content_lora_scale=1.):
         
         if style_lora_name :
             style_lora_path = folder_paths.get_full_path("loras", style_lora_name)
