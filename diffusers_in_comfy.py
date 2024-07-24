@@ -147,7 +147,7 @@ class BLoRALoader:
         return {"required":{
                 "pipeline" : ("PIPELINE",),
                 "style_lora_name" : (folder_paths.get_filename_list("loras"),),
-                "style_lora_scale" : ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step":0.1, "round": 0.01}),
+                "style_lora_scale" : ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.1, "step":0.1, "round": 0.01}),
               
         }}
     
