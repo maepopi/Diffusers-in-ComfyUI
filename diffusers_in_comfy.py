@@ -20,6 +20,7 @@ class CreatePipeline:
     def INPUT_TYPES(cls):
         return {"required": {
                     "is_sdxl": ("BOOLEAN", {"default": True}),
+                    "low_vram": ("BOOLEAN", {"default": True}),
                     "model": (folder_paths.get_filename_list("checkpoints"),),
                 }}
 
@@ -29,15 +30,22 @@ class CreatePipeline:
 
 
     
-    def create_pipeline(self, is_sdxl, model):
+    def create_pipeline(self, is_sdxl, low_vram, model):
         
         model_path = folder_paths.get_full_path("checkpoints", model)
 
         if is_sdxl:
-            return (StableDiffusionXLPipeline.from_single_file(model_path, torch_dtype=torch.float16).to("cuda"),)
+            pipeline = StableDiffusionXLPipeline.from_single_file(model_path, torch_dtype=torch.float16).to("cuda")
         
         else:
-            return (StableDiffusionPipeline.from_single_file(model_path, torch_dtype=torch.float16).to("cuda"),)
+            pipeline = StableDiffusionPipeline.from_single_file(model_path, torch_dtype=torch.float16).to("cuda")
+        
+        if low_vram:
+            pipeline.enable_xformers_memory_efficient_attention()
+            pipeline.enable_model_cpu_offload()
+        
+        return (pipeline,)
+
         
 
 
