@@ -7,7 +7,6 @@ from torchvision.transforms import ToTensor
 
 '''To do
 - Investigate the model caching
-- Add options for low VRAM
 '''
 
 
@@ -47,9 +46,7 @@ class CreatePipeline:
         
         return (pipeline,)
 
-        
-
-
+    
 class GenerateImage:
     def __init__(self) -> None:
         pass
@@ -105,7 +102,6 @@ class GenerateImage:
         return (self.convert_images_to_tensors(images),)
         
 
-
 class LoRALoader:
     def __init__(self) -> None:
         pass
@@ -146,9 +142,9 @@ class BLoRALoader:
     def INPUT_TYPES(cls):
         return {"required":{
                 "pipeline" : ("PIPELINE",),
-                "style_lora_name" : (folder_paths.get_filename_list("loras"),),
+                "style_lora_name" : ("STRING", {"multiline": False}),
                 "style_lora_scale" : ("FLOAT", {"default": 1.1, "min": 0.0, "max": 1.1, "step":0.1, "round": 0.01}),
-                "content_lora_name" : (folder_paths.get_filename_list("loras"),),
+                "content_lora_name" : ("STRING", {"multiline": False}),
                 "content_lora_scale" : ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step":0.1, "round": 0.01}),
               
         }}
@@ -186,7 +182,7 @@ class BLoRALoader:
                             style_lora_scale=1.,
                             content_lora_scale=1.):
         
-        if style_lora_name :
+        if style_lora_name != '' :
             style_lora_path = folder_paths.get_full_path("loras", style_lora_name)
             style_lora_state_dict, _ = pipeline.lora_state_dict(style_lora_path)
             style_lora = self.filter_lora(style_lora_state_dict, self.BLOCKS['style'])
@@ -196,7 +192,7 @@ class BLoRALoader:
             style_lora = {}
         
 
-        if content_lora_name:
+        if content_lora_name != '':
             content_lora_path = folder_paths.get_full_path("loras", content_lora_name)
             content_lora_state_dict, _ = pipeline.lora_state_dict(content_lora_path)
             content_lora = self.filter_lora(content_lora_state_dict, self.BLOCKS['content'])
