@@ -80,16 +80,27 @@ class GenerateImage:
     def generate_image(self, pipeline, seed, steps, cfg, positive, negative, width, height):
         generator = torch.Generator(device='cuda').manual_seed(seed)
 
-  
-        images = pipeline(
-            prompt=positive,
-            generator=generator,
-            num_inference_steps = steps,
-            guidance_scale = cfg,
-            width=width,
-            height=height,
-    
-        ).images
+        if negative == '':
+            images = pipeline(
+                prompt=positive,
+                generator=generator,
+                num_inference_steps = steps,
+                guidance_scale = cfg,
+                width=width,
+                height=height,
+            ).images
+
+        else:
+            images = pipeline(
+                prompt=positive,
+                negative_prompt=negative,
+                generator=generator,
+                num_inference_steps = steps,
+                guidance_scale = cfg,
+                width=width,
+                height=height,
+            ).images
+
 
         return (self.convert_images_to_tensors(images),)
         
