@@ -122,12 +122,69 @@ class LoRALoader:
         return (pipeline,)
 
 
+class BLoRALoader:
+    BLOCKS = {
+    'content': ['unet.up_blocks.0.attentions.0'],
+    'style': ['unet.up_blocks.0.attentions.1'],
+    }
+
+    def __init__(self) -> None:
+        pass
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required":{
+                "pipeline" : ("PIPELINE",),
+                "style_lora_name" : (folder_paths.get_filename_list("loras"),),
+                "style_lora_scale" : ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step":0.1, "round": 0.01}),
+              
+        }}
+    
+    RETURN_TYPES = ("PIPELINE",) 
+    FUNCTION = "load_b_lora_to_unet"
+    CATEGORY = "Diffusers-in-Comfy/LoadComponents"
+
+    def is_belong_to_blocks(self, key, blocks):
+        try:
+            for g in blocks:
+                if g in key:
+                    return True
+            return False
+        except Exception as e:
+            raise type(e)(f'failed to is_belong_to_block, due to: {e}')
+
+    def filter_lora(self, state_dict, blocks_):
+        try:
+            return {k: v for k, v in state_dict.items() if self.is_belong_to_blocks(k, blocks_)}
+        except Exception as e:
+            raise type(e)(f'failed to filter_lora, due to: {e}')
+
+    def scale_lora(self, state_dict, alpha):
+        try:
+            return {k: v * alpha for k, v in state_dict.items()}
+        except Exception as e:
+            raise type(e)(f'failed to scale_lora, due to: {e}')
+
+
+    def load_b_lora_to_unet(self, pipeline, style_lora_name, style_lora_scale):
+        style_lora_path = folder_paths.get_full_path("loras", style_lora_name)
+        style_lora_state_dict, _ = pipeline.lora_state_dict(style_lora_path)
+        style_lora = self.filter_lora(style_lora_state_dict, self.BLOCKS['style'])
+        style_lora = self.scale_lora(style_lora, style_lora_scale)
+
+        pipeline.load_lora_into_unet(style_lora, None, pipeline.unet)
+
+
+        return (pipeline,)
+
+
     
 
 NODE_CLASS_MAPPINGS = {
     "CreatePipeline": CreatePipeline,
     "GenerateImage": GenerateImage,
     "LoRALoader" : LoRALoader,
+    "BLoRALoader" : BLoRALoader,
 
 }
 
@@ -135,5 +192,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "CreatePipeline" : "CreatePipeline",
     "GenerateImage" : "GenerateImage",
     "LoRALoader" : "LoRALoader",
+    "BLoRALoader" : "BLoRALoader",
    
 }
