@@ -59,7 +59,6 @@ class GenerateImage:
     def INPUT_TYPES(cls):
         return {"required": {
                     "pipeline": ("PIPELINE",),
-                    "has_lora": ("BOOLEAN", {"default": False}),
                     "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                     "positive": ("STRING", {"multiline": True}),
                     "negative": ("STRING", {"multiline": True}),
@@ -78,32 +77,19 @@ class GenerateImage:
         return torch.stack([np.transpose(ToTensor()(image), (1, 2, 0)) for image in images])
 
 
-    def generate_image(self, pipeline, seed, steps, cfg, positive, negative, width, height, has_lora):
+    def generate_image(self, pipeline, seed, steps, cfg, positive, negative, width, height):
         generator = torch.Generator(device='cuda').manual_seed(seed)
 
-        if has_lora:
-            images = pipeline(
-                prompt=positive, 
-                num_inference_steps=steps, 
-                generator=generator, 
-                guidance_scale=cfg, 
-                cross_attention_kwargs={"scale":1.0},
-                width=width,
-                height=height,
-            ).images
-
-
-        else:
-            images = pipeline(
-                prompt=positive,
-                generator=generator,
-                negative_prompt = negative,
-                num_inference_steps = steps,
-                guidance_scale = cfg,
-                width=width,
-                height=height,
-        
-            ).images
+  
+        images = pipeline(
+            prompt=positive,
+            generator=generator,
+            num_inference_steps = steps,
+            guidance_scale = cfg,
+            width=width,
+            height=height,
+    
+        ).images
 
         return (self.convert_images_to_tensors(images),)
         
