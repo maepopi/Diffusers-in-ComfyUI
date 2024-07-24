@@ -147,7 +147,9 @@ class BLoRALoader:
         return {"required":{
                 "pipeline" : ("PIPELINE",),
                 "style_lora_name" : (folder_paths.get_filename_list("loras"),),
-                "style_lora_scale" : ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.1, "step":0.1, "round": 0.01}),
+                "style_lora_scale" : ("FLOAT", {"default": 1.1, "min": 0.0, "max": 1.1, "step":0.1, "round": 0.01}),
+                "content_lora_name" : (folder_paths.get_filename_list("loras"),),
+                "content_lora_scale" : ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.1, "step":0.1, "round": 0.01}),
               
         }}
     
@@ -177,13 +179,31 @@ class BLoRALoader:
             raise type(e)(f'failed to scale_lora, due to: {e}')
 
 
-    def load_b_lora_to_unet(self, pipeline, style_lora_name, style_lora_scale):
-        style_lora_path = folder_paths.get_full_path("loras", style_lora_name)
-        style_lora_state_dict, _ = pipeline.lora_state_dict(style_lora_path)
-        style_lora = self.filter_lora(style_lora_state_dict, self.BLOCKS['style'])
-        style_lora = self.scale_lora(style_lora, style_lora_scale)
+    def load_b_lora_to_unet(self, pipeline, style_lora_name, style_lora_scale, content_lora_name, content_lora_scale):
+        
+        if style_lora_name :
+            style_lora_path = folder_paths.get_full_path("loras", style_lora_name)
+            style_lora_state_dict, _ = pipeline.lora_state_dict(style_lora_path)
+            style_lora = self.filter_lora(style_lora_state_dict, self.BLOCKS['style'])
+            style_lora = self.scale_lora(style_lora, style_lora_scale)
+        
+        else:
+            style_lora = {}
+        
 
-        pipeline.load_lora_into_unet(style_lora, None, pipeline.unet)
+        if content_lora_name:
+            content_lora_path = folder_paths.get_full_path("loras", content_lora_name)
+            content_lora_state_dict, _ = pipeline.lora_state_dict(content_lora_path)
+            content_lora = self.filter_lora(content_lora_state_dict, self.BLOCKS['content'])
+            content_lora = self.scale_lora(content_lora, content_lora_scale)
+
+        else:
+            content_lora = {}
+
+        merged_lora = {**style_lora, **content_lora}
+
+    
+        pipeline.load_lora_into_unet(merged_lora, None, pipeline.unet)
 
 
         return (pipeline,)
