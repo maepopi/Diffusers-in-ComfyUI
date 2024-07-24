@@ -2,6 +2,7 @@ from diffusers import StableDiffusionXLPipeline, StableDiffusionPipeline
 import folder_paths
 import torch
 import numpy as np
+import os
 from torchvision.transforms import ToTensor
 
 '''To do
@@ -58,6 +59,7 @@ class GenerateImage:
     def INPUT_TYPES(cls):
         return {"required": {
                     "pipeline": ("PIPELINE",),
+                    "has_lora": ("BOOLEAN", {"default": False}),
                     "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                     "positive": ("STRING", {"multiline": True}),
                     "negative": ("STRING", {"multiline": True}),
@@ -76,31 +78,76 @@ class GenerateImage:
         return torch.stack([np.transpose(ToTensor()(image), (1, 2, 0)) for image in images])
 
 
-    def generate_image(self, pipeline, seed, steps, cfg, positive, negative, width, height,):
+    def generate_image(self, pipeline, seed, steps, cfg, positive, negative, width, height, has_lora):
         generator = torch.Generator(device='cuda').manual_seed(seed)
-        images = pipeline(
-            prompt=positive,
-            generator=generator,
-            negative_prompt = negative,
-            num_inference_steps = steps,
-            guidance_scale = cfg,
-            width=width,
-            height=height,
-        ).images
+
+        if has_lora:
+            images = pipeline(
+                prompt=positive, 
+                num_inference_steps=steps, 
+                generator=generator, 
+                guidance_scale=cfg, 
+                cross_attention_kwargs={"scale":1.0},
+                width=width,
+                height=height,
+            ).images
+
+
+        else:
+            images = pipeline(
+                prompt=positive,
+                generator=generator,
+                negative_prompt = negative,
+                num_inference_steps = steps,
+                guidance_scale = cfg,
+                width=width,
+                height=height,
+        
+            ).images
 
         return (self.convert_images_to_tensors(images),)
         
 
 
+class LoRALoader:
+    def __init__(self) -> None:
+        pass
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required":{
+                "pipeline" : ("PIPELINE",),
+                "lora_name" : (folder_paths.get_filename_list("loras"),),
+                "lora_scale" : ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step":0.1, "round": 0.01}),
+            
+        }}
+    
+    RETURN_TYPES = ("PIPELINE",) 
+    FUNCTION = "load_lora"
+    CATEGORY = "Diffusers-in-Comfy/LoadComponents"
+
+    def load_lora(self, pipeline, lora_name, lora_scale):
+        lora_path = folder_paths.get_full_path("loras", lora_name)
+        lora_name = os.path.splitext(lora_name)[0]
+        pipeline.load_lora_weights(lora_path, adapter_name=lora_name)
+        pipeline.set_adapters([lora_name], adapter_weights=[lora_scale])
+
+
+        return (pipeline,)
+
+
+    
 
 NODE_CLASS_MAPPINGS = {
     "CreatePipeline": CreatePipeline,
     "GenerateImage": GenerateImage,
+    "LoRALoader" : LoRALoader,
 
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "CreatePipeline" : "CreatePipeline",
     "GenerateImage" : "GenerateImage",
+    "LoRALoader" : "LoRALoader",
    
 }
