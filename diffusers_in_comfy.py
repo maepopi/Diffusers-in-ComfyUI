@@ -15,7 +15,7 @@ from PIL import Image
 
 
 
-class StableDiffusionPipeline:
+class GenerateStableDiffusionPipeline:
     def __init__(self) -> None:
         pass
 
@@ -281,7 +281,7 @@ class BLoRALoader:
     
 
 NODE_CLASS_MAPPINGS = {
-    "CreatePipeline": StableDiffusionPipeline,
+    "CreatePipeline": GenerateStableDiffusionPipeline,
     "GenerateImage": ImageInference,
     "LoRALoader" : LoRALoader,
     "BLoRALoader" : BLoRALoader,
@@ -290,7 +290,7 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "CreatePipeline" : "StableDiffusionPipeline",
+    "CreatePipeline" : "GenerateStableDiffusionPipeline",
     "GenerateImage" : "ImageInference",
     "LoRALoader" : "LoRALoader",
     "BLoRALoader" : "BLoRALoader",
