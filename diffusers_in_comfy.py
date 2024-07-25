@@ -60,7 +60,7 @@ class CreateControlNetPipeline:
                     "is_sdxl": ("BOOLEAN", {"default": True}),
                     "low_vram": ("BOOLEAN", {"default": True}),
                     "model": (folder_paths.get_filename_list("checkpoints"),),
-                    "controlnet_model" : (folder_paths.get_filename_list("controlnet"),),
+                    "controlnet_model" : ("STRING", {"multiline":False}),
 
                 }}
 
@@ -70,12 +70,10 @@ class CreateControlNetPipeline:
 
     def create_controlnet_pipeline(self, is_sdxl, low_vram, model, controlnet_model):
         
-     
-        model_path = folder_paths.get_full_path("checkpoints", model)
-        controlnet_model_path = folder_paths.get_full_path("controlnet", controlnet_model)
-        
+    
+        model_path = folder_paths.get_full_path("checkpoints", model)        
 
-        controlnet = ControlNetModel.from_pretrained("diffusers/controlnet-canny-sdxl-1.0", torch_dtype=torch.float16,use_safetensors=True)
+        controlnet = ControlNetModel.from_pretrained(controlnet_model, torch_dtype=torch.float16,use_safetensors=True)
     
         if is_sdxl:
             pipeline = StableDiffusionXLControlNetPipeline.from_single_file(model_path, controlnet=controlnet, torch_dtype=torch.float16).to("cuda")
@@ -86,9 +84,7 @@ class CreateControlNetPipeline:
         if low_vram:
             pipeline.enable_xformers_memory_efficient_attention()
             pipeline.enable_model_cpu_offload()
-        
-        print(f"pipeline generation controlnet is {pipeline.controlnet}")
-     
+             
         return (pipeline, )
     
 class GenerateImage:
