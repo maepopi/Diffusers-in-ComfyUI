@@ -161,7 +161,7 @@ class ImageInference:
         
         if controlnet_image:
             args['image'] = controlnet_image
-            args['controlnet_scale'] = controlnet_scale
+            args['controlnet_conditioning_scale'] = controlnet_scale
         
         images = pipeline(**args).images
 
