@@ -1,4 +1,4 @@
-from diffusers import StableDiffusionXLPipeline, StableDiffusionPipeline, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, ControlNetModel
+from diffusers import AutoencoderKL, StableDiffusionXLPipeline, StableDiffusionPipeline, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, ControlNetModel
 import folder_paths
 import torch
 import numpy as np
@@ -15,8 +15,7 @@ from PIL import Image
 
 
 
-
-class CreateGenericPipeline:
+class StableDiffusionPipeline:
     def __init__(self) -> None:
         pass
 
@@ -26,68 +25,55 @@ class CreateGenericPipeline:
                     "is_sdxl": ("BOOLEAN", {"default": True}),
                     "low_vram": ("BOOLEAN", {"default": True}),
                     "model": (folder_paths.get_filename_list("checkpoints"),),
-                }}
+                },
+                "optional":
+                {
+                    "vae": ("STRING", {"multiline": False}),
+                    "controlnet_model" : ("STRING", {"multiline": False}),
+                }
+                }
 
     RETURN_TYPES = ("PIPELINE",)
     FUNCTION = "create_pipeline"
     CATEGORY = "Diffusers-in-Comfy"
 
 
-    
-    def create_pipeline(self, is_sdxl, low_vram, model):
-        
-        model_path = folder_paths.get_full_path("checkpoints", model)
+    def create_pipeline(self, is_sdxl, low_vram, model, vae, controlnet_model):
+        args = {
+            "pretrained_model_link_or_path" : folder_paths.get_full_path("checkpoints", model),
+            "torch_dtype" : torch.float16,
+        }
+
+        if vae != '':
+            args['vae'] =  AutoencoderKL.from_pretrained(vae, torch_dtype=torch.float16, use_safetensors=True)
+
+        if controlnet_model != '':
+            args['controlnet'] = ControlNetModel.from_pretrained(controlnet_model, torch_dtype=torch.float16, use_safetensors=True)
+
 
         if is_sdxl:
-            pipeline = StableDiffusionXLPipeline.from_single_file(model_path, torch_dtype=torch.float16).to("cuda")
-        
+            if 'controlnet' in args:
+                pipeline = StableDiffusionXLControlNetPipeline.from_single_file(**args)
+                
+            else:
+                pipeline = StableDiffusionXLPipeline.from_single_file(**args)
+
         else:
-            pipeline = StableDiffusionPipeline.from_single_file(model_path, torch_dtype=torch.float16).to("cuda")
-        
+            if 'controlnet' in args:
+                pipeline = StableDiffusionControlNetPipeline.from_single_file(**args)
+                                    
+            else:
+                pipeline = StableDiffusionPipeline.from_single_file(**args)
+                
+
         if low_vram:
             pipeline.enable_xformers_memory_efficient_attention()
             pipeline.enable_model_cpu_offload()
-        
+
         return (pipeline,)
-
-class CreateControlNetPipeline:
-    def __init__(self) -> None:
-        pass
-
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {"required": {
-                    "is_sdxl": ("BOOLEAN", {"default": True}),
-                    "low_vram": ("BOOLEAN", {"default": True}),
-                    "model": (folder_paths.get_filename_list("checkpoints"),),
-                    "controlnet_model" : ("STRING", {"multiline":False}),
-
-                }}
-
-    RETURN_TYPES = ("PIPELINE",)
-    FUNCTION = "create_controlnet_pipeline"
-    CATEGORY = "Diffusers-in-Comfy/ControlNet"
-
-    def create_controlnet_pipeline(self, is_sdxl, low_vram, model, controlnet_model):
-        
     
-        model_path = folder_paths.get_full_path("checkpoints", model)        
 
-        controlnet = ControlNetModel.from_pretrained(controlnet_model, torch_dtype=torch.float16,use_safetensors=True)
-    
-        if is_sdxl:
-            pipeline = StableDiffusionXLControlNetPipeline.from_single_file(model_path, controlnet=controlnet, torch_dtype=torch.float16).to("cuda")
-        
-        else:
-            pipeline = StableDiffusionControlNetPipeline.from_single_file(model_path, controlnet=controlnet, torch_dtype=torch.float16).to("cuda")
-        
-        if low_vram:
-            pipeline.enable_xformers_memory_efficient_attention()
-            pipeline.enable_model_cpu_offload()
-             
-        return (pipeline, )
-    
-class GenerateImage:
+class ImageInference:
     def __init__(self) -> None:
         pass
 
@@ -103,10 +89,12 @@ class GenerateImage:
                     "width": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
                     "height": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
                     "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01}),       
+                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01}), 
+                      
                 }}
 
     RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("Result",)
     FUNCTION = "generate_image"
     CATEGORY = "Diffusers-in-Comfy"
 
@@ -141,7 +129,7 @@ class GenerateImage:
 
         return (self.convert_images_to_tensors(images),)
 
-class GenerateControlledImage:
+class ImageControlNetInference:
     def __init__(self) -> None:
         pass
 
@@ -162,7 +150,8 @@ class GenerateControlledImage:
                     "height": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
                     "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                     "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01}),       
-                }}
+                }
+                }
 
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "generate_controlled_image"
@@ -339,20 +328,20 @@ class BLoRALoader:
     
 
 NODE_CLASS_MAPPINGS = {
-    "CreatePipeline": CreateGenericPipeline,
-    "CreateControlNetPipeline": CreateControlNetPipeline,
-    "GenerateImage": GenerateImage,
-    "GenerateControlledImage": GenerateControlledImage,
+    "CreatePipeline": StableDiffusionPipeline,
+    "CreateControlNetPipeline": StableDiffusionControlNetPipeline,
+    "GenerateImage": ImageInference,
+    "GenerateControlledImage": ImageControlNetInference,
     "LoRALoader" : LoRALoader,
     "BLoRALoader" : BLoRALoader,
 
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "CreatePipeline" : "CreateGenericPipeline",
-    "CreateControlNetPipeline": "CreateControlNetPipeline",
-    "GenerateImage" : "GenerateImage",
-    "GenerateControlledImage": "GenerateControlledImage",
+    "CreatePipeline" : "StableDiffusionPipeline",
+    "CreateControlNetPipeline": "StableDiffusionControlNetPipeline",
+    "GenerateImage" : "ImageInference",
+    "GenerateControlledImage": "ImageControlNetInference",
     "LoRALoader" : "LoRALoader",
     "BLoRALoader" : "BLoRALoader",
    
