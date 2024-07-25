@@ -123,7 +123,7 @@ class ImageInference:
                     "width": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
                     "height": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
                     "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                    "cfg": ("FLOAT", {"default": 4.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01}),      
+                    "cfg": ("FLOAT", {"default": 5.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01}),      
                 },
 
                 "optional": {
