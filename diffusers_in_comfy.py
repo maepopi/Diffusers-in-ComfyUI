@@ -142,8 +142,10 @@ class ImageInference:
         return torch.stack([np.transpose(ToTensor()(image), (1, 2, 0)) for image in images])
 
 
-    def infer_image(self, pipeline, seed, steps, cfg, positive, negative, width, height, controlnet_image, controlnet_scale):
+    def infer_image(self, pipeline, seed, steps, cfg, positive, negative, width, height, controlnet_image=None, controlnet_scale=None):
         generator = torch.Generator(device='cuda').manual_seed(seed)
+
+        print(f'at this stage, controlnet image is {controlnet_image} of type {type(controlnet_image)}')
 
         args = {
             "prompt": positive,
