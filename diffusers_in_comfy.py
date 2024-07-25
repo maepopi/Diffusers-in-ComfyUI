@@ -1,4 +1,4 @@
-from diffusers import StableDiffusionXLPipeline, StableDiffusionPipeline, ControlNetModel
+from diffusers import StableDiffusionXLPipeline, StableDiffusionPipeline, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, ControlNetModel
 import folder_paths
 import torch
 import numpy as np
@@ -61,28 +61,14 @@ class CreateControlNetPipeline:
                     "low_vram": ("BOOLEAN", {"default": True}),
                     "model": (folder_paths.get_filename_list("checkpoints"),),
                     "controlnet_model" : (folder_paths.get_filename_list("controlnet"),),
-                    "controlnet_image_path": ("STRING", {"multiline":False}),
-                    "high_threshold": ("INT", {"default": 200, "min":0, "max":255}),
-                    "low_threshold": ("INT", {"default": 100, "min":0, "max":255}),
+
                 }}
 
-    RETURN_TYPES = ("PIPELINE", "IMAGE")
+    RETURN_TYPES = ("PIPELINE",)
     FUNCTION = "create_controlnet_pipeline"
     CATEGORY = "Diffusers-in-Comfy/ControlNet"
 
-
-    def controlnet_stuff(self, image_path, high, low):
-        original_image = load_image(image_path)
-        image = np.array(original_image)
-        image = cv2.Canny(image, low, high)
-        image = image[:, :, None]
-        image = np.concatenate([image, image, image], axis=2)
-        return Image.fromarray(image)
-
-    def convert_images_to_tensors(self, images):
-        return torch.stack([np.transpose(ToTensor()(image), (1, 2, 0)) for image in images])
-
-    def create_controlnet_pipeline(self, is_sdxl, low_vram, high_threshold, low_threshold, model, controlnet_model, controlnet_image_path):
+    def create_controlnet_pipeline(self, is_sdxl, low_vram, model, controlnet_model):
         
      
         model_path = folder_paths.get_full_path("checkpoints", model)
@@ -90,20 +76,20 @@ class CreateControlNetPipeline:
         
 
         controlnet = ControlNetModel.from_pretrained("diffusers/controlnet-canny-sdxl-1.0", torch_dtype=torch.float16,use_safetensors=True)
-        image = self.controlnet_stuff(controlnet_image_path, high_threshold, low_threshold)
-
+    
         if is_sdxl:
-            pipeline = StableDiffusionXLPipeline.from_single_file(model_path, controlnet=controlnet, torch_dtype=torch.float16).to("cuda")
+            pipeline = StableDiffusionXLControlNetPipeline.from_single_file(model_path, controlnet=controlnet, torch_dtype=torch.float16).to("cuda")
         
         else:
-            pipeline = StableDiffusionPipeline.from_single_file(model_path, torch_dtype=torch.float16).to("cuda")
+            pipeline = StableDiffusionControlNetPipeline.from_single_file(model_path, controlnet=controlnet, torch_dtype=torch.float16).to("cuda")
         
         if low_vram:
             pipeline.enable_xformers_memory_efficient_attention()
             pipeline.enable_model_cpu_offload()
         
-        print(f'at this stage image is {image} and type is {type(image)}')
-        return (pipeline, self.convert_images_to_tensors([image]),)
+        print(f"pipeline generation controlnet is {pipeline.controlnet}")
+     
+        return (pipeline, )
     
 class GenerateImage:
     def __init__(self) -> None:
@@ -168,8 +154,10 @@ class GenerateControlledImage:
     def INPUT_TYPES(cls):
         return {"required": {
                     "pipeline": ("PIPELINE",),
-                    "control_image" : ("IMAGE",),
+                    "controlnet_image_path" : ("STRING", {"multiline": True}),
                     "control_scale": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step":0.1, "round": 0.01}),
+                    "controlnet_high_threshold": ("INT", {"default": 200, "min":0, "max":255}),
+                    "controlnet_low_threshold": ("INT", {"default": 100, "min":0, "max":255}),
                     "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                     "positive": ("STRING", {"multiline": True}),
                     "negative": ("STRING", {"multiline": True}),
@@ -184,12 +172,36 @@ class GenerateControlledImage:
     FUNCTION = "generate_controlled_image"
     CATEGORY = "Diffusers-in-Comfy/ControlNet"
 
+    def create_controlnet_image(self, image_path, high, low):
+        original_image = load_image(image_path)
+        image = np.array(original_image)
+        image = cv2.Canny(image, low, high)
+        image = image[:, :, None]
+        image = np.concatenate([image, image, image], axis=2)
+        return Image.fromarray(image)
+
+
     def convert_images_to_tensors(self, images):
         return torch.stack([np.transpose(ToTensor()(image), (1, 2, 0)) for image in images])
+ 
+    def generate_controlled_image(self, 
+                                  pipeline, 
+                                  controlnet_image_path, 
+                                  controlnet_high_threshold,
+                                  controlnet_low_threshold, 
+                                  control_scale, 
+                                  seed, 
+                                  steps, 
+                                  cfg, 
+                                  positive, 
+                                  negative, 
+                                  width, 
+                                  height):
+        
 
-
-    def generate_controlled_image(self, pipeline, control_image, control_scale, seed, steps, cfg, positive, negative, width, height):
         generator = torch.Generator(device='cuda').manual_seed(seed)
+
+        control_image = self.create_controlnet_image(controlnet_image_path, controlnet_high_threshold, controlnet_low_threshold)
 
         if negative == '':
             images = pipeline(
