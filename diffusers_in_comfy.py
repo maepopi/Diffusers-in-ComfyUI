@@ -1,18 +1,22 @@
-from diffusers import StableDiffusionXLPipeline, StableDiffusionPipeline
+from diffusers import StableDiffusionXLPipeline, StableDiffusionPipeline, ControlNetModel
 import folder_paths
 import torch
 import numpy as np
 import os
 from torchvision.transforms import ToTensor
+from diffusers.utils import load_image, make_image_grid
+import cv2
+from PIL import Image
 
 '''To do
 - Investigate the model caching
+- Le controlnet c'est pas possible de le passer après que le pipe ait été instancié. Il faudrait faire un node spécial CreateControlNetPipe 
 '''
 
 
 
 
-class CreatePipeline:
+class CreateGenericPipeline:
     def __init__(self) -> None:
         pass
 
@@ -46,6 +50,60 @@ class CreatePipeline:
         
         return (pipeline,)
 
+class CreateControlNetPipeline:
+    def __init__(self) -> None:
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {
+                    "is_sdxl": ("BOOLEAN", {"default": True}),
+                    "low_vram": ("BOOLEAN", {"default": True}),
+                    "model": (folder_paths.get_filename_list("checkpoints"),),
+                    "controlnet_model" : (folder_paths.get_filename_list("controlnet"),),
+                    "controlnet_image_path": ("STRING", {"multiline":False}),
+                    "high_threshold": ("INT", {"default": 200, "min":0, "max":255}),
+                    "low_threshold": ("INT", {"default": 100, "min":0, "max":255}),
+                }}
+
+    RETURN_TYPES = ("PIPELINE", "IMAGE")
+    FUNCTION = "create_controlnet_pipeline"
+    CATEGORY = "Diffusers-in-Comfy/ControlNet"
+
+
+    def controlnet_stuff(self, image_path, high, low):
+        original_image = load_image(image_path)
+        image = np.array(original_image)
+        image = cv2.Canny(image, low, high)
+        image = image[:, :, None]
+        image = np.concatenate([image, image, image], axis=2)
+        return Image.fromarray(image)
+
+    def convert_images_to_tensors(self, images):
+        return torch.stack([np.transpose(ToTensor()(image), (1, 2, 0)) for image in images])
+
+    def create_controlnet_pipeline(self, is_sdxl, low_vram, high_threshold, low_threshold, model, controlnet_model, controlnet_image_path):
+        
+     
+        model_path = folder_paths.get_full_path("checkpoints", model)
+        controlnet_model_path = folder_paths.get_full_path("controlnet", controlnet_model)
+        
+
+        controlnet = ControlNetModel.from_pretrained("diffusers/controlnet-canny-sdxl-1.0", torch_dtype=torch.float16,use_safetensors=True)
+        image = self.controlnet_stuff(controlnet_image_path, high_threshold, low_threshold)
+
+        if is_sdxl:
+            pipeline = StableDiffusionXLPipeline.from_single_file(model_path, controlnet=controlnet, torch_dtype=torch.float16).to("cuda")
+        
+        else:
+            pipeline = StableDiffusionPipeline.from_single_file(model_path, torch_dtype=torch.float16).to("cuda")
+        
+        if low_vram:
+            pipeline.enable_xformers_memory_efficient_attention()
+            pipeline.enable_model_cpu_offload()
+        
+        print(f'at this stage image is {image} and type is {type(image)}')
+        return (pipeline, self.convert_images_to_tensors([image]),)
     
 class GenerateImage:
     def __init__(self) -> None:
@@ -100,7 +158,66 @@ class GenerateImage:
 
 
         return (self.convert_images_to_tensors(images),)
-        
+
+class GenerateControlledImage:
+    def __init__(self) -> None:
+        pass
+
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {
+                    "pipeline": ("PIPELINE",),
+                    "control_image" : ("IMAGE",),
+                    "control_scale": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step":0.1, "round": 0.01}),
+                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                    "positive": ("STRING", {"multiline": True}),
+                    "negative": ("STRING", {"multiline": True}),
+                    "steps":  ("INT", {"default": 50, "min": 1, "max": 10000}),
+                    "width": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
+                    "height": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
+                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
+                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01}),       
+                }}
+
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "generate_controlled_image"
+    CATEGORY = "Diffusers-in-Comfy/ControlNet"
+
+    def convert_images_to_tensors(self, images):
+        return torch.stack([np.transpose(ToTensor()(image), (1, 2, 0)) for image in images])
+
+
+    def generate_controlled_image(self, pipeline, control_image, control_scale, seed, steps, cfg, positive, negative, width, height):
+        generator = torch.Generator(device='cuda').manual_seed(seed)
+
+        if negative == '':
+            images = pipeline(
+                prompt=positive,
+                image=control_image,
+                controlnet_conditioning_scale=control_scale,
+                generator=generator,
+                num_inference_steps = steps,
+                guidance_scale = cfg,
+                width=width,
+                height=height,
+            ).images
+
+        else:
+            images = pipeline(
+                prompt=positive,
+                negative_prompt=negative,
+                image=control_image,
+                controlnet_conditioning_scale=control_scale,
+                generator=generator,
+                num_inference_steps = steps,
+                guidance_scale = cfg,
+                width=width,
+                height=height,
+            ).images
+
+
+        return (self.convert_images_to_tensors(images),)        
 
 class LoRALoader:
     def __init__(self) -> None:
@@ -117,7 +234,7 @@ class LoRALoader:
     
     RETURN_TYPES = ("PIPELINE",) 
     FUNCTION = "load_lora"
-    CATEGORY = "Diffusers-in-Comfy/LoadComponents"
+    CATEGORY = "Diffusers-in-Comfy"
 
     def load_lora(self, pipeline, lora_name, lora_scale):
         lora_path = folder_paths.get_full_path("loras", lora_name)
@@ -151,7 +268,7 @@ class BLoRALoader:
     
     RETURN_TYPES = ("PIPELINE",) 
     FUNCTION = "load_b_lora_to_unet"
-    CATEGORY = "Diffusers-in-Comfy/LoadComponents"
+    CATEGORY = "Diffusers-in-Comfy"
 
     def is_belong_to_blocks(self, key, blocks):
         try:
@@ -210,19 +327,24 @@ class BLoRALoader:
         return (pipeline,)
 
 
+
     
 
 NODE_CLASS_MAPPINGS = {
-    "CreatePipeline": CreatePipeline,
+    "CreatePipeline": CreateGenericPipeline,
+    "CreateControlNetPipeline": CreateControlNetPipeline,
     "GenerateImage": GenerateImage,
+    "GenerateControlledImage": GenerateControlledImage,
     "LoRALoader" : LoRALoader,
     "BLoRALoader" : BLoRALoader,
 
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "CreatePipeline" : "CreatePipeline",
+    "CreatePipeline" : "CreateGenericPipeline",
+    "CreateControlNetPipeline": "CreateControlNetPipeline",
     "GenerateImage" : "GenerateImage",
+    "GenerateControlledImage": "GenerateControlledImage",
     "LoRALoader" : "LoRALoader",
     "BLoRALoader" : "BLoRALoader",
    
