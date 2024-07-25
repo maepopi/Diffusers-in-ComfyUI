@@ -10,7 +10,7 @@ from PIL import Image
 
 '''To do
 - Investigate the model caching
-- Le controlnet c'est pas possible de le passer après que le pipe ait été instancié. Il faudrait faire un node spécial CreateControlNetPipe 
+- Deduce the model architecture, SDXL or SD (see B-Lora Comfy code)
 '''
 
 
