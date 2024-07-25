@@ -73,6 +73,40 @@ class StableDiffusionPipeline:
         return (pipeline,)
     
 
+
+class MakeCanny:
+
+    def __init__(self) -> None:
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {
+                    "image_path" : ("STRING", {"multiline": True}),
+                    "high_threshold": ("INT", {"default": 200, "min":0, "max":255}),
+                    "low_threshold": ("INT", {"default": 100, "min":0, "max":255}),
+
+                }}
+
+    RETURN_TYPES = ("IMAGE", "IMAGE")
+    RETURN_NAMES = ("Canny", "Canny Preview")
+    FUNCTION = "create_canny"
+    CATEGORY = "Diffusers-in-Comfy"
+
+    def convert_images_to_tensors(self, images):
+        return torch.stack([np.transpose(ToTensor()(image), (1, 2, 0)) for image in images])
+
+    def create_canny(self, image_path, low_threshold, high_threshold):
+        original_image = load_image(image_path)
+        image = np.array(original_image)
+        image = cv2.Canny(image, low_threshold, high_threshold)
+        image = image[:, :, None]
+        image = np.concatenate([image, image, image], axis=2)
+        canny = Image.fromarray(image)
+        return (canny, self.convert_images_to_tensors([canny]),)
+        
+
+
 class ImageInference:
     def __init__(self) -> None:
         pass
@@ -329,20 +363,20 @@ class BLoRALoader:
 
 NODE_CLASS_MAPPINGS = {
     "CreatePipeline": StableDiffusionPipeline,
-    "CreateControlNetPipeline": StableDiffusionControlNetPipeline,
     "GenerateImage": ImageInference,
     "GenerateControlledImage": ImageControlNetInference,
     "LoRALoader" : LoRALoader,
     "BLoRALoader" : BLoRALoader,
+    "MakeCanny": MakeCanny,
 
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "CreatePipeline" : "StableDiffusionPipeline",
-    "CreateControlNetPipeline": "StableDiffusionControlNetPipeline",
     "GenerateImage" : "ImageInference",
     "GenerateControlledImage": "ImageControlNetInference",
     "LoRALoader" : "LoRALoader",
     "BLoRALoader" : "BLoRALoader",
+    "MakeCanny": "MakeCanny",
    
 }
