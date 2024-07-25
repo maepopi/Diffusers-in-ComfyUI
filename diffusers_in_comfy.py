@@ -165,92 +165,7 @@ class ImageInference:
 
         return (self.convert_images_to_tensors(images),)
 
-class ImageControlNetInference:
-    def __init__(self) -> None:
-        pass
 
-
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {"required": {
-                    "pipeline": ("PIPELINE",),
-                    "controlnet_image_path" : ("STRING", {"multiline": True}),
-                    "control_scale": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step":0.1, "round": 0.01}),
-                    "controlnet_high_threshold": ("INT", {"default": 200, "min":0, "max":255}),
-                    "controlnet_low_threshold": ("INT", {"default": 100, "min":0, "max":255}),
-                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                    "positive": ("STRING", {"multiline": True}),
-                    "negative": ("STRING", {"multiline": True}),
-                    "steps":  ("INT", {"default": 50, "min": 1, "max": 10000}),
-                    "width": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
-                    "height": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
-                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01}),       
-                }
-                }
-
-    RETURN_TYPES = ("IMAGE",)
-    FUNCTION = "generate_controlled_image"
-    CATEGORY = "Diffusers-in-Comfy/ControlNet"
-
-    def create_controlnet_image(self, image_path, high, low):
-        original_image = load_image(image_path)
-        image = np.array(original_image)
-        image = cv2.Canny(image, low, high)
-        image = image[:, :, None]
-        image = np.concatenate([image, image, image], axis=2)
-        return Image.fromarray(image)
-
-
-    def convert_images_to_tensors(self, images):
-        return torch.stack([np.transpose(ToTensor()(image), (1, 2, 0)) for image in images])
- 
-    def generate_controlled_image(self, 
-                                  pipeline, 
-                                  controlnet_image_path, 
-                                  controlnet_high_threshold,
-                                  controlnet_low_threshold, 
-                                  control_scale, 
-                                  seed, 
-                                  steps, 
-                                  cfg, 
-                                  positive, 
-                                  negative, 
-                                  width, 
-                                  height):
-        
-
-        generator = torch.Generator(device='cuda').manual_seed(seed)
-
-        control_image = self.create_controlnet_image(controlnet_image_path, controlnet_high_threshold, controlnet_low_threshold)
-
-        if negative == '':
-            images = pipeline(
-                prompt=positive,
-                image=control_image,
-                controlnet_conditioning_scale=control_scale,
-                generator=generator,
-                num_inference_steps = steps,
-                guidance_scale = cfg,
-                width=width,
-                height=height,
-            ).images
-
-        else:
-            images = pipeline(
-                prompt=positive,
-                negative_prompt=negative,
-                image=control_image,
-                controlnet_conditioning_scale=control_scale,
-                generator=generator,
-                num_inference_steps = steps,
-                guidance_scale = cfg,
-                width=width,
-                height=height,
-            ).images
-
-
-        return (self.convert_images_to_tensors(images),)        
 
 class LoRALoader:
     def __init__(self) -> None:
@@ -366,7 +281,6 @@ class BLoRALoader:
 NODE_CLASS_MAPPINGS = {
     "CreatePipeline": StableDiffusionPipeline,
     "GenerateImage": ImageInference,
-    "GenerateControlledImage": ImageControlNetInference,
     "LoRALoader" : LoRALoader,
     "BLoRALoader" : BLoRALoader,
     "MakeCanny": MakeCanny,
@@ -376,7 +290,6 @@ NODE_CLASS_MAPPINGS = {
 NODE_DISPLAY_NAME_MAPPINGS = {
     "CreatePipeline" : "StableDiffusionPipeline",
     "GenerateImage" : "ImageInference",
-    "GenerateControlledImage": "ImageControlNetInference",
     "LoRALoader" : "LoRALoader",
     "BLoRALoader" : "BLoRALoader",
     "MakeCanny": "MakeCanny",
