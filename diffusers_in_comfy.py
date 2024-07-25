@@ -65,6 +65,7 @@ class GenerateStableDiffusionPipeline:
             else:
                 pipeline = StableDiffusionPipeline.from_single_file(**args)
                 
+        pipeline.to('cuda')
 
         if low_vram:
             pipeline.enable_xformers_memory_efficient_attention()
