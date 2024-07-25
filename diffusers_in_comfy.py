@@ -123,43 +123,45 @@ class ImageInference:
                     "width": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
                     "height": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
                     "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01}), 
-                      
-                }}
+                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01}),      
+                },
+
+                "optional": {
+                    "controlnet_image" : ("IMAGE",),
+                    "controlnet_scale": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step":0.1, "round": 0.01}),
+                    
+                } 
+                }
 
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("Result",)
-    FUNCTION = "generate_image"
+    FUNCTION = "infer_image"
     CATEGORY = "Diffusers-in-Comfy"
 
     def convert_images_to_tensors(self, images):
         return torch.stack([np.transpose(ToTensor()(image), (1, 2, 0)) for image in images])
 
 
-    def generate_image(self, pipeline, seed, steps, cfg, positive, negative, width, height):
+    def infer_image(self, pipeline, seed, steps, cfg, positive, negative, width, height, controlnet_image, controlnet_scale):
         generator = torch.Generator(device='cuda').manual_seed(seed)
 
-        if negative == '':
-            images = pipeline(
-                prompt=positive,
-                generator=generator,
-                num_inference_steps = steps,
-                guidance_scale = cfg,
-                width=width,
-                height=height,
-            ).images
+        args = {
+            "prompt": positive,
+            "generator": generator,
+            "num_inference_steps" : steps,
+            "guidance_scale" : cfg,
+            "width" : width,
+            "height" : height,
+        }
 
-        else:
-            images = pipeline(
-                prompt=positive,
-                negative_prompt=negative,
-                generator=generator,
-                num_inference_steps = steps,
-                guidance_scale = cfg,
-                width=width,
-                height=height,
-            ).images
-
+        if negative != '':
+            args['negative'] = negative
+        
+        if controlnet_image:
+            args['image'] = controlnet_image
+            args['controlnet_scale'] = controlnet_scale
+        
+        images = pipeline(**args).images
 
         return (self.convert_images_to_tensors(images),)
 
