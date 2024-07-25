@@ -46,7 +46,7 @@ Don't hesitate checking out Limitex' repo, it is much more complete than mine at
 
 # Nodes
 
-**GenerateStableDiffusionPipeline** : This node instanciates a StableDiffusionPipeline (compatible SDXL), and can take an optional VAE and ControlNet as inputs. It also has an option to toggle low VRAM flags.
+**GenerateStableDiffusionPipeline** : This node instanciates a StableDiffusionPipeline (compatible SDXL), and can take an optional VAE and ControlNet as inputs. It also has an option to toggle low VRAM flags. For now, it only is compatible with Text2Image.
 
 **ImageInference** : This node is to infer the image with different possible options such as a ControlNet.
 
