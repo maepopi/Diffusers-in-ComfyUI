@@ -283,7 +283,7 @@ class BLoRALoader:
 
 NODE_CLASS_MAPPINGS = {
     "CreatePipeline": GenerateStableDiffusionPipeline,
-    "GenerateImage": ImageInference,
+    "ImageInference": ImageInference,
     "LoRALoader" : LoRALoader,
     "BLoRALoader" : BLoRALoader,
     "MakeCanny": MakeCanny,
@@ -292,7 +292,7 @@ NODE_CLASS_MAPPINGS = {
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "CreatePipeline" : "GenerateStableDiffusionPipeline",
-    "GenerateImage" : "ImageInference",
+    "ImageInference" : "ImageInference",
     "LoRALoader" : "LoRALoader",
     "BLoRALoader" : "BLoRALoader",
     "MakeCanny": "MakeCanny",
