@@ -9,39 +9,32 @@ Don't hesitate checking out Limitex' repo, it is much more complete than mine at
 # Installation
 1. Create a conda environment with Python 3.9
 2. Activate your environment
-3. Install accelerate
+3. Then clone [ComfyUI](https://github.com/comfyanonymous/ComfyUI) repository
 
-    ```pip install accelerate```
-
-4. Configure your acceleration
-
-    ```accelerate config```
-
-5. Install Diffusers API 
-
-    ```pip install git+https://github.com/huggingface/diffusers```
-
-6. Then write this:
-
-    ```pip install torch xformers torchvision transformers bitsandbytes```
-
-7. Then clone [ComfyUI](https://github.com/comfyanonymous/ComfyUI) repository
-
-8. Follow ComfyUI installation instructions:
+4. Follow ComfyUI installation instructions:
 
     ```pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu121```
 
     ```pip install -r https://raw.githubusercontent.com/comfyanonymous/ComfyUI/master/requirements.txt```
 
-9. Inside the "custom nodes" folder of ComfyUI, clone this repo and get inside.
+5. Install Diffusers API 
 
-10. Install open-cv
+    ```pip install git+https://github.com/huggingface/diffusers```
 
-    ```pip install opencv-python```
+6. Install accelerate
 
-11. Install peft
+    ```pip install accelerate```
 
-    ```pip install peft```
+7. Configure your acceleration
+
+    ```accelerate config```
+
+8. Install remaining missing packages
+
+    ```pip install xformers opencv-python peft omegaconf```
+
+
+
 
 
 # Nodes
