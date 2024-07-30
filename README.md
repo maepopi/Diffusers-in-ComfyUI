@@ -33,7 +33,9 @@ Don't hesitate checking out Limitex' repo, it is much more complete than mine at
 
     ```pip install xformers opencv-python peft omegaconf```
 
+9. Navigate to ComfyUI/custom-nodes, and clone this repo inside
 
+10. Launch ComfyUI
 
 
 
