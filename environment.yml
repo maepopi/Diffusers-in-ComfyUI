@@ -1,4 +1,4 @@
-name: C:\Users\maely\pinokio\bin\miniconda\envs\comfy
+name: diffusers-comfy
 channels:
   - defaults
 dependencies:
