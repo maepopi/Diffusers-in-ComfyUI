@@ -1,6 +1,8 @@
 name: diffusers-comfy
 channels:
   - defaults
+  -conda-forge
+
 dependencies:
   - ca-certificates=2024.7.2=haa95532_0
   - openssl=1.1.1w=h2bbff1b_0
@@ -82,4 +84,3 @@ dependencies:
       - xformers==0.0.27
       - yarl==1.9.4
       - zipp==3.19.2
-prefix: C:\Users\maely\pinokio\bin\miniconda\envs\comfy
