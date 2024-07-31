@@ -60,8 +60,7 @@ class GenerateStableDiffusionPipeline:
  
         args = {
             "pretrained_model_link_or_path" : folder_paths.get_full_path("checkpoints", model),
-            "torch_dtype" : torch_dtype,
-            "variant" : "fp16"
+            "torch_dtype" : torch_dtype
         }
 
         if vae != '':
@@ -85,15 +84,17 @@ class GenerateStableDiffusionPipeline:
             else:
                 pipeline = StableDiffusionPipeline.from_single_file(**args)
                 
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        pipeline.to(device)
 
         if low_vram:
             pipeline.enable_xformers_memory_efficient_attention()
             pipeline.enable_model_cpu_offload()
             device = 'cpu'
-            pipeline.to(device)
-        
+            
+
+        else:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        pipeline.to(device)
   
         print(f'device is {device}')
         return (pipeline,)
