@@ -56,16 +56,20 @@ class GenerateStableDiffusionPipeline:
 
 
     def create_pipeline(self, is_sdxl, low_vram, model, vae, controlnet_model):
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        torch_dtype = torch.float16
+ 
         args = {
             "pretrained_model_link_or_path" : folder_paths.get_full_path("checkpoints", model),
-            "torch_dtype" : torch.float16,
+            "torch_dtype" : torch_dtype,
+            "variat" : "fp16"
         }
 
         if vae != '':
-            args['vae'] =  AutoencoderKL.from_pretrained(vae, torch_dtype=torch.float16, use_safetensors=True)
+            args['vae'] =  AutoencoderKL.from_pretrained(vae, torch_dtype=torch_dtype, use_safetensors=True)
 
         if controlnet_model != '':
-            args['controlnet'] = ControlNetModel.from_pretrained(controlnet_model, torch_dtype=torch.float16, use_safetensors=True)
+            args['controlnet'] = ControlNetModel.from_pretrained(controlnet_model, torch_dtype=torch_dtype, use_safetensors=True)
 
 
         if is_sdxl:
@@ -87,6 +91,7 @@ class GenerateStableDiffusionPipeline:
         if low_vram:
             pipeline.enable_xformers_memory_efficient_attention()
             pipeline.enable_model_cpu_offload()
+            pipeline.to('cpu')
 
         return (pipeline,)
     
@@ -192,9 +197,9 @@ class ImageInference:
 
 
     def infer_image(self, pipeline, seed, steps, cfg, positive, negative, width, height, controlnet_image=None, controlnet_scale=None):
+        # If we make the generation run on CPU here, it will give a different result than GPU
+        # IF there are still VRAM issues, try changing this to 'cpu'
         generator = torch.Generator(device='cuda').manual_seed(seed)
-
-        print(f'at this stage, controlnet image is {controlnet_image} of type {type(controlnet_image)}')
 
         args = {
             "prompt": positive,
