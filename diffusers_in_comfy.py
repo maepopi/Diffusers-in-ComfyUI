@@ -16,6 +16,23 @@ from PIL import Image
 
 
 class GenerateStableDiffusionPipeline:
+    '''
+        This node generates the Stable Diffusion Pipeline (currently compatible pipelines are StableDiffusionXLPipeline,
+        StableDiffusionPipeline, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline).
+
+        Required inputs : 
+            - is_sdxl : whether the loaded model has an SDXL base
+            - low_vram : whether to activate low VRAM options 
+            - model :  the model that has to be instanciated
+
+        Optional outputs:
+            - vae : which VAE to use - copy the name of the VAE from Hugging Face
+            - controlnet_model : which ControlNet model to use - copy the name of the ControlNet from Hugging Face
+
+        Ouputs:
+            Pipeline
+    
+    '''
     def __init__(self) -> None:
         pass
 
@@ -76,6 +93,18 @@ class GenerateStableDiffusionPipeline:
 
 
 class MakeCanny:
+    '''
+        This node allows you to transform your image into a canny mask.
+
+        Required inputs:
+            - image_path : the string path to your image on your computer, or an URL
+            - high_threshold : high threshold for the edges to be calculated
+            - low_threshold : low_threshold for the edges to be calculated
+        
+        Output:
+            - an image "Canny" that can then be processed further down the Comfy Workflow
+            - a tensor 'Canny Preview" that is an image converted to tensor to be displayed by Comfy's preview image node
+    '''
 
     def __init__(self) -> None:
         pass
@@ -109,6 +138,26 @@ class MakeCanny:
 
 
 class ImageInference:
+    """
+        This class proceeds to the inference of the image based on the pipeline and its components.
+
+        Required inputs:
+            - pipeline : the Stable Diffusion Pipeline
+            - seed : seed for the generation of the image
+            - positive : the positive prompt
+            - negative : the negative prompt
+            - steps : the number of inference steps
+            - width : width of the generated image
+            - height : height of the generated image
+            - cfg : guidance scale
+        
+        Optional inputs:
+            - controlnet_image : the image coming out of the Canny Node
+            - controlnet_scale : weight of the canny to control the inferred image
+
+        Output:
+            - an image
+    """
     def __init__(self) -> None:
         pass
 
@@ -123,7 +172,6 @@ class ImageInference:
                     "steps":  ("INT", {"default": 50, "min": 1, "max": 10000}),
                     "width": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
                     "height": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
-                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                     "cfg": ("FLOAT", {"default": 5.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01}),      
                 },
 
@@ -171,6 +219,18 @@ class ImageInference:
 
 
 class LoRALoader:
+    """
+        This node allows to load a LoRA to the pipeline.
+
+        Required inputs:
+            - pipeline : the Stable diffusion pipeline to connect the LoRA to
+            - lora_name : name of your lora in the Lora folder. Only write the namen with the extension, not the total path
+            - lora_scale : weight of the lora on the generated output
+        
+        Output:
+            - pipeline with the LoRA loaded to the Unet
+
+    """
     def __init__(self) -> None:
         pass
     
@@ -198,6 +258,19 @@ class LoRALoader:
 
 
 class BLoRALoader:
+    """
+        This node allows to load a B-Lora to the Unet. 
+
+        Required:
+            - pipeline : the Stable Diffusion pipeline to which the B-Lora must be applied
+            - style_lora_name : name of the lora you want to apply as style lora (only write the name + extension inside your lora folder, not total path)
+            - style_lora_scale : weight of the style lora on the generated output
+            - content_lora_name : name of the lora you want to apply as content lora (only write the name + extension inside your lora folder, not total path)
+            - content_lora_scale : weight of the content lora on the generated output
+        
+        Output:
+            - pipeline with the B-LoRA loaded into its Unet.
+    """
     BLOCKS = {
     'content': ['unet.up_blocks.0.attentions.0'],
     'style': ['unet.up_blocks.0.attentions.1'],
