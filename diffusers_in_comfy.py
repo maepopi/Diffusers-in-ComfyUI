@@ -56,7 +56,7 @@ class GenerateStableDiffusionPipeline:
 
 
     def create_pipeline(self, is_sdxl, low_vram, model, vae, controlnet_model):
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = "cuda" if torch.cuda.is_available() and not low_vram else "cpu"
         torch_dtype = torch.float16
  
         args = {
@@ -86,12 +86,13 @@ class GenerateStableDiffusionPipeline:
             else:
                 pipeline = StableDiffusionPipeline.from_single_file(**args)
                 
-        pipeline.to('cuda')
+       
 
         if low_vram:
             pipeline.enable_xformers_memory_efficient_attention()
             pipeline.enable_model_cpu_offload()
-            pipeline.to('cpu')
+        
+        pipeline.to(device)
 
         return (pipeline,)
     
@@ -218,6 +219,10 @@ class ImageInference:
             args['controlnet_conditioning_scale'] = float(controlnet_scale)
         
         images = pipeline(**args).images
+
+        # Clear GPU memory after inference
+        if pipeline.device == 'cuda':
+            torch.cuda.empty_cache()
 
         return (self.convert_images_to_tensors(images),)
 
