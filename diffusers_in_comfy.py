@@ -11,6 +11,8 @@ from PIL import Image
 '''To do
 - Investigate the model caching
 - Deduce the model architecture, SDXL or SD (see B-Lora Comfy code)
+- There is something wrong in Linux in the way the GPU memory is handled : the inference takes way too much GPU + it isn't purged after an inference, leading to having to kill the process
+- Also on the other hand, the inference with ControlNet on the other machine takes 10 mn against 60 seconds here!
 '''
 
 
@@ -56,8 +58,10 @@ class GenerateStableDiffusionPipeline:
 
 
     def create_pipeline(self, is_sdxl, low_vram, model, vae, controlnet_model):
+
+        device = 'cpu' if low_vram or not torch.cuda.is_available() else 'cuda'
         torch_dtype = torch.float16
- 
+
         args = {
             "pretrained_model_link_or_path" : folder_paths.get_full_path("checkpoints", model),
             "torch_dtype" : torch_dtype
@@ -73,30 +77,26 @@ class GenerateStableDiffusionPipeline:
         if is_sdxl:
             if 'controlnet' in args:
                 pipeline = StableDiffusionXLControlNetPipeline.from_single_file(**args)
-                
+
             else:
                 pipeline = StableDiffusionXLPipeline.from_single_file(**args)
 
         else:
             if 'controlnet' in args:
                 pipeline = StableDiffusionControlNetPipeline.from_single_file(**args)
-                                    
+
             else:
                 pipeline = StableDiffusionPipeline.from_single_file(**args)
-                
+
 
         if low_vram:
             pipeline.enable_xformers_memory_efficient_attention()
             pipeline.enable_model_cpu_offload()
-            device = 'cpu'
-            
 
-        else:
-            device = "cuda" if torch.cuda.is_available() else "cpu"
 
         pipeline.to(device)
-  
-        print(f'device is {device}')
+
+        print(f'Low VRAM options is {low_vram}, sending pipeline to {device}')
         return (pipeline,)
     
 
