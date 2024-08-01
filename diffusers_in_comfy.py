@@ -1,18 +1,17 @@
 from diffusers import AutoencoderKL, StableDiffusionXLPipeline, StableDiffusionPipeline, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, ControlNetModel
+from diffusers.utils import load_image
+from .utils import convert_images_to_tensors, filter_lora, scale_lora
 import folder_paths
 import torch
 import numpy as np
 import os
-from torchvision.transforms import ToTensor
-from diffusers.utils import load_image, make_image_grid
 import cv2
+
 from PIL import Image
 
 '''To do
 - Investigate the model caching
 - Deduce the model architecture, SDXL or SD (see B-Lora Comfy code)
-- There is something wrong in Linux in the way the GPU memory is handled : the inference takes way too much GPU + it isn't purged after an inference, leading to having to kill the process
-- Also on the other hand, the inference with ControlNet on the other machine takes 10 mn against 60 seconds here!
 '''
 
 
@@ -132,8 +131,6 @@ class MakeCanny:
     FUNCTION = "create_canny"
     CATEGORY = "Diffusers-in-Comfy"
 
-    def convert_images_to_tensors(self, images):
-        return torch.stack([np.transpose(ToTensor()(image), (1, 2, 0)) for image in images])
 
     def create_canny(self, image_path, low_threshold, high_threshold):
         original_image = load_image(image_path)
@@ -142,7 +139,7 @@ class MakeCanny:
         image = image[:, :, None]
         image = np.concatenate([image, image, image], axis=2)
         canny = Image.fromarray(image)
-        return (canny, self.convert_images_to_tensors([canny]),)
+        return (canny, convert_images_to_tensors([canny]),)
         
 
 
@@ -196,10 +193,6 @@ class ImageInference:
     FUNCTION = "infer_image"
     CATEGORY = "Diffusers-in-Comfy"
 
-    def convert_images_to_tensors(self, images):
-        return torch.stack([np.transpose(ToTensor()(image), (1, 2, 0)) for image in images])
-
-
     def infer_image(self, pipeline, seed, steps, cfg, positive, negative, width, height, controlnet_image=None, controlnet_scale=None):
         # If we make the generation run on CPU here, it will give a different result than GPU
         # IF there are still VRAM issues, try changing this to 'cpu'
@@ -227,7 +220,7 @@ class ImageInference:
         if pipeline.device == 'cuda':
             torch.cuda.empty_cache()
 
-        return (self.convert_images_to_tensors(images),)
+        return (convert_images_to_tensors(images),)
 
 
 
@@ -307,26 +300,7 @@ class BLoRALoader:
     FUNCTION = "load_b_lora_to_unet"
     CATEGORY = "Diffusers-in-Comfy"
 
-    def is_belong_to_blocks(self, key, blocks):
-        try:
-            for g in blocks:
-                if g in key:
-                    return True
-            return False
-        except Exception as e:
-            raise type(e)(f'failed to is_belong_to_block, due to: {e}')
-
-    def filter_lora(self, state_dict, blocks_):
-        try:
-            return {k: v for k, v in state_dict.items() if self.is_belong_to_blocks(k, blocks_)}
-        except Exception as e:
-            raise type(e)(f'failed to filter_lora, due to: {e}')
-
-    def scale_lora(self, state_dict, alpha):
-        try:
-            return {k: v * alpha for k, v in state_dict.items()}
-        except Exception as e:
-            raise type(e)(f'failed to scale_lora, due to: {e}')
+    
 
 
     def load_b_lora_to_unet(self, 
@@ -339,8 +313,8 @@ class BLoRALoader:
         if style_lora_name != '' :
             style_lora_path = folder_paths.get_full_path("loras", style_lora_name)
             style_lora_state_dict, _ = pipeline.lora_state_dict(style_lora_path)
-            style_lora = self.filter_lora(style_lora_state_dict, self.BLOCKS['style'])
-            style_lora = self.scale_lora(style_lora, style_lora_scale)
+            style_lora = filter_lora(style_lora_state_dict, self.BLOCKS['style'])
+            style_lora = scale_lora(style_lora, style_lora_scale)
         
         else:
             style_lora = {}
@@ -349,8 +323,8 @@ class BLoRALoader:
         if content_lora_name != '':
             content_lora_path = folder_paths.get_full_path("loras", content_lora_name)
             content_lora_state_dict, _ = pipeline.lora_state_dict(content_lora_path)
-            content_lora = self.filter_lora(content_lora_state_dict, self.BLOCKS['content'])
-            content_lora = self.scale_lora(content_lora, content_lora_scale)
+            content_lora = filter_lora(content_lora_state_dict, self.BLOCKS['content'])
+            content_lora = scale_lora(content_lora, content_lora_scale)
 
         else:
             content_lora = {}
