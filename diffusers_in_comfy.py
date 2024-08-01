@@ -15,7 +15,6 @@ from PIL import Image
 '''
 
 
-
 class GenerateStableDiffusionPipeline:
     '''
         This node generates the Stable Diffusion Pipeline (currently compatible pipelines are StableDiffusionXLPipeline,
@@ -99,7 +98,6 @@ class GenerateStableDiffusionPipeline:
         return (pipeline,)
     
 
-
 class MakeCanny:
     '''
         This node allows you to transform your image into a canny mask.
@@ -141,7 +139,6 @@ class MakeCanny:
         canny = Image.fromarray(image)
         return (canny, convert_images_to_tensors([canny]),)
         
-
 
 class ImageInference:
     """
@@ -221,7 +218,6 @@ class ImageInference:
             torch.cuda.empty_cache()
 
         return (convert_images_to_tensors(images),)
-
 
 
 class LoRALoader:
