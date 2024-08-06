@@ -294,7 +294,7 @@ class ImageInference:
                     input_image=None, 
                     mask_image=None,
                     mask_invert=True):
-        # If we make the generation run on CPU here, it will give a different result than GPU
+        # If we make the generation run on CPU here, it will give a different image than GPU
         # IF there are still VRAM issues, try changing this to 'cpu'
         generator = torch.Generator(device='cuda').manual_seed(seed)
 
