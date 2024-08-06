@@ -1,6 +1,9 @@
-from diffusers import AutoencoderKL, StableDiffusionXLPipeline, StableDiffusionPipeline, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, ControlNetModel
+from diffusers import AutoencoderKL
+from diffusers import ControlNetModel
+from diffusers import StableDiffusionXLPipeline, StableDiffusionPipeline, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline
+from diffusers import StableDiffusionXLInpaintPipeline, StableDiffusionInpaintPipeline, StableDiffusionXLControlNetInpaintPipeline, StableDiffusionControlNetInpaintPipeline
 from diffusers.utils import load_image
-from .utils import convert_images_to_tensors, filter_lora, scale_lora
+from .utils import convert_images_to_tensors, filter_lora, scale_lora, invert_mask
 import folder_paths
 import torch
 import numpy as np
@@ -15,10 +18,9 @@ from PIL import Image
 '''
 
 
-class GenerateStableDiffusionPipeline:
+class Text2ImgStableDiffusionPipeline:
     '''
-        This node generates the Stable Diffusion Pipeline (currently compatible pipelines are StableDiffusionXLPipeline,
-        StableDiffusionPipeline, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline).
+        This node generates the Stable Diffusion Pipeline for Text2Img.
 
         Required inputs : 
             - is_sdxl : whether the loaded model has an SDXL base
@@ -51,11 +53,11 @@ class GenerateStableDiffusionPipeline:
                 }
 
     RETURN_TYPES = ("PIPELINE",)
-    FUNCTION = "create_pipeline"
+    FUNCTION = "create_text2img_pipeline"
     CATEGORY = "Diffusers-in-Comfy"
 
 
-    def create_pipeline(self, is_sdxl, low_vram, model, vae, controlnet_model):
+    def create_text2img_pipeline(self, is_sdxl, low_vram, model, vae, controlnet_model):
 
         device = 'cpu' if low_vram or not torch.cuda.is_available() else 'cuda'
         torch_dtype = torch.float16
@@ -85,6 +87,89 @@ class GenerateStableDiffusionPipeline:
 
             else:
                 pipeline = StableDiffusionPipeline.from_single_file(**args)
+
+
+        if low_vram:
+            pipeline.enable_xformers_memory_efficient_attention()
+            pipeline.enable_model_cpu_offload()
+
+
+        pipeline.to(device)
+
+        print(f'Low VRAM options is {low_vram}, sending pipeline to {device}')
+        return (pipeline,)
+    
+class InpaintingStableDiffusionPipeline:
+    '''
+        This node generates the Stable Diffusion Pipeline for inpainting.
+
+        Required inputs : 
+            - is_sdxl : whether the loaded model has an SDXL base
+            - low_vram : whether to activate low VRAM options 
+            - model :  the model that has to be instanciated
+
+
+        Optional outputs:
+            - vae : which VAE to use - copy the name of the VAE from Hugging Face
+            - controlnet_model : which ControlNet model to use - copy the name of the ControlNet from Hugging Face
+
+        Ouputs:
+            Pipeline
+    
+    '''
+    def __init__(self) -> None:
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {
+                    "is_sdxl": ("BOOLEAN", {"default": True}),
+                    "low_vram": ("BOOLEAN", {"default": True}),
+                    "model": (folder_paths.get_filename_list("checkpoints"),),
+
+                },
+                "optional":
+                {
+                    "vae": ("STRING", {"multiline": False}),
+                    "controlnet_model" : ("STRING", {"multiline": False}),
+                }
+                }
+
+    RETURN_TYPES = ("PIPELINE",)
+    FUNCTION = "create_inpaint_pipeline"
+    CATEGORY = "Diffusers-in-Comfy"
+
+
+    def create_inpaint_pipeline(self, is_sdxl, low_vram, model, vae, controlnet_model):
+
+        device = 'cpu' if low_vram or not torch.cuda.is_available() else 'cuda'
+        torch_dtype = torch.float16
+
+        args = {
+            "pretrained_model_link_or_path" : folder_paths.get_full_path("checkpoints", model),
+            "torch_dtype" : torch_dtype
+        }
+
+        if vae != '':
+            args['vae'] =  AutoencoderKL.from_pretrained(vae, torch_dtype=torch_dtype, use_safetensors=True)
+
+        if controlnet_model != '':
+            args['controlnet'] = ControlNetModel.from_pretrained(controlnet_model, torch_dtype=torch_dtype, use_safetensors=True)
+
+
+        if is_sdxl:
+            if 'controlnet' in args:
+                pipeline = StableDiffusionXLControlNetInpaintPipeline.from_single_file(**args)
+
+            else:
+                pipeline = StableDiffusionXLInpaintPipeline.from_single_file(**args)
+
+        else:
+            if 'controlnet' in args:
+                pipeline = StableDiffusionControlNetInpaintPipeline.from_single_file(**args)
+
+            else:
+                pipeline = StableDiffusionInpaintPipeline.from_single_file(**args)
 
 
         if low_vram:
@@ -157,6 +242,8 @@ class ImageInference:
         Optional inputs:
             - controlnet_image : the image coming out of the Canny Node
             - controlnet_scale : weight of the canny to control the inferred image
+            - input_image : the image that has to be inpainted
+            - mask_image : the mask of the area where the image has to be inpainted
 
         Output:
             - an image
@@ -181,6 +268,9 @@ class ImageInference:
                 "optional": {
                     "controlnet_image" : ("IMAGE",),
                     "controlnet_scale": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step":0.1, "round": 0.01}),
+                    "input_image" :  ("STRING", {"multiline": True}),
+                    "mask_image" :  ("STRING", {"multiline": True}),
+                    "mask_invert" : ("BOOLEAN",{"default":True}),
                     
                 } 
                 }
@@ -190,10 +280,24 @@ class ImageInference:
     FUNCTION = "infer_image"
     CATEGORY = "Diffusers-in-Comfy"
 
-    def infer_image(self, pipeline, seed, steps, cfg, positive, negative, width, height, controlnet_image=None, controlnet_scale=None):
+    def infer_image(self, 
+                    pipeline, 
+                    seed, 
+                    steps, 
+                    cfg, 
+                    positive, 
+                    negative, 
+                    width, 
+                    height, 
+                    controlnet_image=None, 
+                    controlnet_scale=None, 
+                    input_image=None, 
+                    mask_image=None,
+                    mask_invert=True):
         # If we make the generation run on CPU here, it will give a different result than GPU
         # IF there are still VRAM issues, try changing this to 'cpu'
         generator = torch.Generator(device='cuda').manual_seed(seed)
+
 
         args = {
             "prompt": positive,
@@ -210,6 +314,18 @@ class ImageInference:
         if controlnet_image:
             args['image'] = controlnet_image
             args['controlnet_conditioning_scale'] = float(controlnet_scale)
+        
+        if input_image != '':
+            input_image = load_image(input_image)
+            args['image']= load_image(input_image)
+        
+        if mask_image != '':
+            mask_image = load_image(mask_image)
+
+            if mask_invert:
+                mask_image = invert_mask(mask_image)
+
+            args['mask_image'] = mask_image
         
         images = pipeline(**args).images
 
@@ -338,7 +454,8 @@ class BLoRALoader:
     
 
 NODE_CLASS_MAPPINGS = {
-    "CreatePipeline": GenerateStableDiffusionPipeline,
+    "CreateText2ImgPipeline": Text2ImgStableDiffusionPipeline,
+    "CreateInpaintPipeline": InpaintingStableDiffusionPipeline,
     "ImageInference": ImageInference,
     "LoRALoader" : LoRALoader,
     "BLoRALoader" : BLoRALoader,
@@ -347,7 +464,8 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "CreatePipeline" : "GenerateStableDiffusionPipeline",
+    "CreateText2ImagePipeline" : "Text2ImgStableDiffusionPipeline",
+    "CreateInpaintPipeline": "InpaintingStableDiffusionPipeline",
     "ImageInference" : "ImageInference",
     "LoRALoader" : "LoRALoader",
     "BLoRALoader" : "BLoRALoader",
