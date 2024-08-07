@@ -15,6 +15,7 @@ from PIL import Image
 '''To do
 - Investigate the model caching
 - Deduce the model architecture, SDXL or SD (see B-Lora Comfy code)
+- change pipeline instanciation
 '''
 
 
