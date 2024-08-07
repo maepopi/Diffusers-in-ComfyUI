@@ -95,7 +95,7 @@ class Text2ImgStableDiffusionPipeline:
             pipeline.enable_model_cpu_offload()
 
 
-        pipeline.to(device)
+        pipeline = pipeline.to(device)
 
         print(f'Low VRAM options is {low_vram}, sending pipeline to {device}')
         return (pipeline,)
@@ -371,6 +371,7 @@ class LoRALoader:
         lora_name = os.path.splitext(lora_name)[0]
         pipeline.load_lora_weights(lora_path, adapter_name=lora_name)
         pipeline.set_adapters([lora_name], adapter_weights=[lora_scale])
+
 
 
         return (pipeline,)
