@@ -313,7 +313,7 @@ class ImageInference:
             args['negative'] = negative
         
         if controlnet_image:
-            args['image'] = controlnet_image
+            args['control_image'] = controlnet_image
             args['controlnet_conditioning_scale'] = float(controlnet_scale)
         
         if input_image != '':
