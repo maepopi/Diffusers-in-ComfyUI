@@ -3,6 +3,7 @@ from diffusers import ControlNetModel
 from diffusers import StableDiffusionXLPipeline, StableDiffusionPipeline, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline
 from diffusers import StableDiffusionXLInpaintPipeline, StableDiffusionInpaintPipeline, StableDiffusionXLControlNetInpaintPipeline, StableDiffusionControlNetInpaintPipeline
 from diffusers.utils import load_image
+from .utils import PipelineFactory, Text2ImgPipelineCreator
 from .utils import convert_images_to_tensors, filter_lora, scale_lora, invert_mask
 import folder_paths
 import torch
@@ -17,6 +18,12 @@ from PIL import Image
 - Deduce the model architecture, SDXL or SD (see B-Lora Comfy code)
 - change pipeline instanciation
 '''
+
+
+# Registering the needed pipelines
+PipelineFactory.register_creator('text2img', Text2ImgPipelineCreator)
+
+
 
 
 class Text2ImgStableDiffusionPipeline:
@@ -59,46 +66,93 @@ class Text2ImgStableDiffusionPipeline:
 
 
     def create_text2img_pipeline(self, is_sdxl, low_vram, model, vae, controlnet_model):
-
-        device = 'cpu' if low_vram or not torch.cuda.is_available() else 'cuda'
-        torch_dtype = torch.float16
-
-        args = {
-            "pretrained_model_link_or_path" : folder_paths.get_full_path("checkpoints", model),
-            "torch_dtype" : torch_dtype
-        }
-
-        if vae != '':
-            args['vae'] =  AutoencoderKL.from_pretrained(vae, torch_dtype=torch_dtype, use_safetensors=True)
-
-        if controlnet_model != '':
-            args['controlnet'] = ControlNetModel.from_pretrained(controlnet_model, torch_dtype=torch_dtype, use_safetensors=True)
-
-
-        if is_sdxl:
-            if 'controlnet' in args:
-                pipeline = StableDiffusionXLControlNetPipeline.from_single_file(**args)
-
-            else:
-                pipeline = StableDiffusionXLPipeline.from_single_file(**args)
-
-        else:
-            if 'controlnet' in args:
-                pipeline = StableDiffusionControlNetPipeline.from_single_file(**args)
-
-            else:
-                pipeline = StableDiffusionPipeline.from_single_file(**args)
-
-
-        if low_vram:
-            pipeline.enable_xformers_memory_efficient_attention()
-            pipeline.enable_model_cpu_offload()
-
-
-        pipeline = pipeline.to(device)
-
-        print(f'Low VRAM options is {low_vram}, sending pipeline to {device}')
+        
+        factory = PipelineFactory()
+        pipeline = factory.get_pipeline(low_vram, 'text2img', model, vae, controlnet_model, is_sdxl, torch_dtype=torch.float16)
+        
         return (pipeline,)
+
+
+# class Text2ImgStableDiffusionPipeline:
+#     '''
+#         This node generates the Stable Diffusion Pipeline for Text2Img.
+
+#         Required inputs : 
+#             - is_sdxl : whether the loaded model has an SDXL base
+#             - low_vram : whether to activate low VRAM options 
+#             - model :  the model that has to be instanciated
+
+#         Optional outputs:
+#             - vae : which VAE to use - copy the name of the VAE from Hugging Face
+#             - controlnet_model : which ControlNet model to use - copy the name of the ControlNet from Hugging Face
+
+#         Ouputs:
+#             Pipeline
+    
+#     '''
+#     def __init__(self) -> None:
+#         pass
+
+#     @classmethod
+#     def INPUT_TYPES(cls):
+#         return {"required": {
+#                     "is_sdxl": ("BOOLEAN", {"default": True}),
+#                     "low_vram": ("BOOLEAN", {"default": True}),
+#                     "model": (folder_paths.get_filename_list("checkpoints"),),
+#                 },
+#                 "optional":
+#                 {
+#                     "vae": ("STRING", {"multiline": False}),
+#                     "controlnet_model" : ("STRING", {"multiline": False}),
+#                 }
+#                 }
+
+#     RETURN_TYPES = ("PIPELINE",)
+#     FUNCTION = "create_text2img_pipeline"
+#     CATEGORY = "Diffusers-in-Comfy"
+
+
+#     def create_text2img_pipeline(self, is_sdxl, low_vram, model, vae, controlnet_model):
+
+#         device = 'cpu' if low_vram or not torch.cuda.is_available() else 'cuda'
+#         torch_dtype = torch.float16
+
+#         args = {
+#             "pretrained_model_link_or_path" : folder_paths.get_full_path("checkpoints", model),
+#             "torch_dtype" : torch_dtype
+#         }
+
+#         if vae != '':
+#             args['vae'] =  AutoencoderKL.from_pretrained(vae, torch_dtype=torch_dtype, use_safetensors=True)
+
+#         if controlnet_model != '':
+#             args['controlnet'] = ControlNetModel.from_pretrained(controlnet_model, torch_dtype=torch_dtype, use_safetensors=True)
+
+
+#         if is_sdxl:
+#             if 'controlnet' in args:
+#                 pipeline = StableDiffusionXLControlNetPipeline.from_single_file(**args)
+
+#             else:
+#                 pipeline = StableDiffusionXLPipeline.from_single_file(**args)
+
+#         else:
+#             if 'controlnet' in args:
+#                 pipeline = StableDiffusionControlNetPipeline.from_single_file(**args)
+
+#             else:
+#                 pipeline = StableDiffusionPipeline.from_single_file(**args)
+
+
+#         if low_vram:
+#             pipeline.enable_xformers_memory_efficient_attention()
+#             pipeline.enable_model_cpu_offload()
+
+
+#         pipeline = pipeline.to(device)
+
+#         print(f'Low VRAM options is {low_vram}, sending pipeline to {device}')
+#         return (pipeline,)
     
 class InpaintingStableDiffusionPipeline:
     '''
