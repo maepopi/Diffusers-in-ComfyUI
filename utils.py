@@ -86,8 +86,6 @@ class PipelineFactory:
 
         return pipeline
     
-    
-
 class PipelineCreator(ABC):
     """
         An abstract base class for creating pipeline creators with specific attributes.
@@ -151,6 +149,10 @@ class InpaintPipelineCreator(PipelineCreator):
 
         return pipeline.from_single_file(**args)
 
+class ImageFactory:
+    """
+        A factory class for creating pipelines based on the provided pipeline type.
+    """
 
 
 def convert_images_to_tensors(images):
