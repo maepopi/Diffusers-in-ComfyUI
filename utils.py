@@ -105,12 +105,10 @@ class PipelineCreator(ABC):
     
 class Text2ImgPipelineCreator(PipelineCreator):
     """
-        A PipelineCreator dedicated to initizalizing a Text2ImgPipelineCreator
+        A PipelineCreator dedicated to initizalizing a Text2Img pipeline.
     """
             
     def initialize_pipeline(self):
-
-
         args = {
             "pretrained_model_link_or_path": folder_paths.get_full_path("checkpoints", self.model),
             "torch_dtype": self.torch_dtype
@@ -129,6 +127,29 @@ class Text2ImgPipelineCreator(PipelineCreator):
 
         return pipeline.from_single_file(**args)
 
+class InpaintPipelineCreator(PipelineCreator):
+    """
+        A PipelineCreator dedicated to initizalizing an Inpaint pipeline.
+    """
+            
+    def initialize_pipeline(self):
+        args = {
+            "pretrained_model_link_or_path": folder_paths.get_full_path("checkpoints", self.model),
+            "torch_dtype": self.torch_dtype
+        }
+
+        if self.vae != '':
+            args['vae'] = AutoencoderKL.from_pretrained(self.vae, torch_dtype=self.torch_dtype, use_safetensors=True)
+
+        if self.controlnet_model != '':
+            args['controlnet'] = ControlNetModel.from_pretrained(self.controlnet_model, torch_dtype=self.torch_dtype, use_safetensors=True)
+
+        if self.is_sdxl:
+            pipeline = StableDiffusionXLControlNetInpaintPipeline if self.controlnet_model != '' else StableDiffusionXLInpaintPipeline
+        else:
+            pipeline = StableDiffusionControlNetInpaintPipeline if self.controlnet_model != '' else StableDiffusionInpaintPipeline
+
+        return pipeline.from_single_file(**args)
 
 
 
