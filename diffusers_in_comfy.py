@@ -447,8 +447,8 @@ class BLoRALoader:
     
 
 NODE_CLASS_MAPPINGS = {
-    "CreateText2ImgPipeline": Text2ImgStableDiffusionPipeline,
-    "CreateInpaintPipeline": InpaintingStableDiffusionPipeline,
+    "Text2ImgStableDiffusionPipeline": Text2ImgStableDiffusionPipeline,
+    "InpaintingStableDiffusionPipeline": InpaintingStableDiffusionPipeline,
     "GenerateTxt2Image" : GenerateText2Image,
     "GenerateInpaintImage": GenerateInpaintImage,
     "LoRALoader" : LoRALoader,
@@ -458,8 +458,8 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "CreateText2ImagePipeline" : "Text2ImgStableDiffusionPipeline",
-    "CreateInpaintPipeline": "InpaintingStableDiffusionPipeline",
+    "Text2ImgStableDiffusionPipeline" : "Text2ImgStableDiffusionPipeline",
+    "InpaintingStableDiffusionPipeline": "InpaintingStableDiffusionPipeline",
     "GenerateTxt2Image" : "GenerateTxt2Image",
     "GenerateInpaintImage": "GenerateInpaintImage",
     "LoRALoader" : "LoRALoader",
