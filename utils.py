@@ -11,6 +11,75 @@ import folder_paths
 from PIL import Image, ImageOps
 from abc import ABC, abstractmethod
 
+class ImageInference:
+    def setup_generator(self, seed):
+        return torch.Generator(device='cuda').manual_seed(seed)
+
+    def infer_image(self, **kwargs):
+        raise NotImplementedError
+
+class Text2ImageInference(ImageInference):
+    def infer_image(self, pipeline, seed, steps, cfg, positive, negative, width, height, controlnet_image=None, controlnet_scale=None):
+        generator = self.setup_generator(seed)
+
+        args = {
+            "prompt": positive,
+            "generator": generator,
+            "num_inference_steps": steps,
+            "guidance_scale": cfg,
+            "width": width,
+            "height": height,
+        }
+
+        if negative != '':
+            args['negative_prompt'] = negative
+        
+        if controlnet_image:
+            args['image'] = controlnet_image
+            args['controlnet_conditioning_scale'] = float(controlnet_scale)
+        
+        
+        images = pipeline(**args).images
+
+        return (convert_images_to_tensors(images))
+    
+class InpaintInference(ImageInference):
+    def infer_image(self, pipeline, seed, steps, cfg, positive, negative, width, height, controlnet_image=None, controlnet_scale=None, input_image=None, mask_image=None, mask_invert=True):
+        generator = self.setup_generator(seed)
+
+        args = {
+            "prompt": positive,
+            "generator": generator,
+            "num_inference_steps": steps,
+            "guidance_scale": cfg,
+            "width": width,
+            "height": height,
+        }
+
+        if negative != '':
+            args['negative_prompt'] = negative
+        
+        if controlnet_image:
+            args['control_image'] = controlnet_image
+            args['controlnet_conditioning_scale'] = float(controlnet_scale)
+        
+        if input_image != '':
+            input_image = load_image(input_image)
+            args['image']= input_image
+        
+        if mask_image != '':
+            mask_image = load_image(mask_image)
+
+            if mask_invert:
+                mask_image = invert_mask(mask_image)
+
+            args['mask_image'] = mask_image
+        
+        images = pipeline(**args).images
+
+        return (convert_images_to_tensors(images))
+
+
 
 class PipelineFactory:
     """
@@ -149,10 +218,7 @@ class InpaintPipelineCreator(PipelineCreator):
 
         return pipeline.from_single_file(**args)
 
-class ImageFactory:
-    """
-        A factory class for creating pipelines based on the provided pipeline type.
-    """
+
 
 
 def convert_images_to_tensors(images):

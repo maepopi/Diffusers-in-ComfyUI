@@ -1,4 +1,5 @@
 from .utils import PipelineFactory, Text2ImgPipelineCreator, InpaintPipelineCreator
+from .utils import Text2ImageInference, InpaintInference
 from .utils import convert_images_to_tensors, filter_lora, scale_lora, invert_mask
 from diffusers.utils import load_image
 import folder_paths
@@ -272,6 +273,95 @@ class ImageInference:
 
         return (convert_images_to_tensors(images),)
 
+class GenerateInpaintImage:
+    """
+        This class proceeds to the inference of the image based on the pipeline and its components.
+
+        Required inputs:
+            - pipeline : the Stable Diffusion Pipeline
+            - seed : seed for the generation of the image
+            - positive : the positive prompt
+            - negative : the negative prompt
+            - steps : the number of inference steps
+            - width : width of the generated image
+            - height : height of the generated image
+            - cfg : guidance scale
+        
+        Optional inputs:
+            - controlnet_image : the image coming out of the Canny Node
+            - controlnet_scale : weight of the canny to control the inferred image
+            - input_image : the image that has to be inpainted
+            - mask_image : the mask of the area where the image has to be inpainted
+
+        Output:
+            - an image
+    """
+    def __init__(self) -> None:
+        pass
+
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {
+                    "pipeline": ("PIPELINE",),
+                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                    "positive": ("STRING", {"multiline": True}),
+                    "negative": ("STRING", {"multiline": True}),
+                    "steps":  ("INT", {"default": 50, "min": 1, "max": 10000}),
+                    "width": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
+                    "height": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
+                    "cfg": ("FLOAT", {"default": 5.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01}),      
+                },
+
+                "optional": {
+                    "controlnet_image" : ("IMAGE",),
+                    "controlnet_scale": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step":0.1, "round": 0.01}),
+                    "input_image" :  ("STRING", {"multiline": True}),
+                    "mask_image" :  ("STRING", {"multiline": True}),
+                    "mask_invert" : ("BOOLEAN",{"default":True}),
+                    
+                } 
+                }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("Result",)
+    FUNCTION = "generate_image"
+    CATEGORY = "Diffusers-in-Comfy"
+
+    def generate_image(self, 
+                    pipeline, 
+                    seed, 
+                    steps, 
+                    cfg, 
+                    positive, 
+                    negative, 
+                    width, 
+                    height, 
+                    controlnet_image=None, 
+                    controlnet_scale=None, 
+                    input_image=None, 
+                    mask_image=None,
+                    mask_invert=True):
+     
+        inpaint_inferer = InpaintInference()
+        images = inpaint_inferer.infer_image(pipeline, 
+                                                  seed, 
+                                                  steps, 
+                                                  cfg, 
+                                                  positive, 
+                                                  negative, 
+                                                  width, 
+                                                  height, 
+                                                  controlnet_image=controlnet_image, 
+                                                  controlnet_scale=controlnet_scale, 
+                                                  input_image=input_image, 
+                                                  mask_image=mask_image, 
+                                                  mask_invert=mask_invert)
+        
+
+        return (images,)
+
+
 
 class LoRALoader:
     """
@@ -395,6 +485,7 @@ NODE_CLASS_MAPPINGS = {
     "CreateText2ImgPipeline": Text2ImgStableDiffusionPipeline,
     "CreateInpaintPipeline": InpaintingStableDiffusionPipeline,
     "ImageInference": ImageInference,
+    "GenerateInpaintImage": GenerateInpaintImage,
     "LoRALoader" : LoRALoader,
     "BLoRALoader" : BLoRALoader,
     "MakeCanny": MakeCanny,
@@ -405,6 +496,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "CreateText2ImagePipeline" : "Text2ImgStableDiffusionPipeline",
     "CreateInpaintPipeline": "InpaintingStableDiffusionPipeline",
     "ImageInference" : "ImageInference",
+    "GenerateInpaintImage": "GenerateInpaintImage",
     "LoRALoader" : "LoRALoader",
     "BLoRALoader" : "BLoRALoader",
     "MakeCanny": "MakeCanny",
