@@ -6,6 +6,7 @@ from diffusers import AutoencoderKL
 from diffusers import ControlNetModel
 from diffusers import StableDiffusionXLPipeline, StableDiffusionPipeline, StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline
 from diffusers import StableDiffusionXLInpaintPipeline, StableDiffusionInpaintPipeline, StableDiffusionXLControlNetInpaintPipeline, StableDiffusionControlNetInpaintPipeline
+from diffusers import StableDiffusionXLImg2ImgPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionXLControlNetImg2ImgPipeline, StableDiffusionControlNetImg2ImgPipeline
 from diffusers.utils import load_image
 import folder_paths
 from PIL import Image, ImageOps
@@ -44,7 +45,7 @@ class Text2ImageInference(ImageInference):
         return (convert_images_to_tensors(images))
     
 class InpaintInference(ImageInference):
-    def infer_image(self, pipeline, seed, steps, cfg, positive, negative, width, height, controlnet_image=None, controlnet_scale=None, input_image=None, mask_image=None, mask_invert=True):
+    def infer_image(self, pipeline, seed, steps, cfg, positive, negative, width, height, input_image, mask_image, mask_invert, controlnet_image=None, controlnet_scale=None, ):
         generator = self.setup_generator(seed)
 
         args = {
@@ -54,6 +55,7 @@ class InpaintInference(ImageInference):
             "guidance_scale": cfg,
             "width": width,
             "height": height,
+            
         }
 
         if negative != '':
@@ -63,17 +65,16 @@ class InpaintInference(ImageInference):
             args['control_image'] = controlnet_image
             args['controlnet_conditioning_scale'] = float(controlnet_scale)
         
-        if input_image != '':
-            input_image = load_image(input_image)
-            args['image']= input_image
+   
+        input_image = load_image(input_image)
+        args['image']= input_image
         
-        if mask_image != '':
-            mask_image = load_image(mask_image)
 
-            if mask_invert:
-                mask_image = invert_mask(mask_image)
+        mask_image = load_image(mask_image)
+        if mask_invert:
+            mask_image = invert_mask(mask_image)
 
-            args['mask_image'] = mask_image
+        args['mask_image'] = mask_image
         
         images = pipeline(**args).images
 
@@ -216,7 +217,7 @@ class Text2ImgPipelineCreator(PipelineCreator):
             args['controlnet'] = ControlNetModel.from_pretrained(self.controlnet_model, torch_dtype=self.torch_dtype, use_safetensors=True)
 
         if self.is_sdxl:
-            pipeline = StableDiffusionXLControlNetPipeline if self.controlnet_model != '' else StableDiffusionXLPipeline
+            pipeline = StableDiffusionXLControlNetPipeline if self.controlnet_model != '' else StableDiffusionXLPipeline # Loads the ControlNet Pipe if controlnet is not empty
         else:
             pipeline = StableDiffusionControlNetPipeline if self.controlnet_model != '' else StableDiffusionPipeline
 
@@ -237,12 +238,13 @@ class Img2ImgPipelineCreator(PipelineCreator):
             args['vae'] = AutoencoderKL.from_pretrained(self.vae, torch_dtype=self.torch_dtype, use_safetensors=True)
 
         if self.controlnet_model != '':
+            print('a controlnet was detected')
             args['controlnet'] = ControlNetModel.from_pretrained(self.controlnet_model, torch_dtype=self.torch_dtype, use_safetensors=True)
 
         if self.is_sdxl:
-            pipeline = StableDiffusionXLControlNetPipeline if self.controlnet_model != '' else StableDiffusionXLPipeline
+            pipeline = StableDiffusionXLControlNetImg2ImgPipeline if self.controlnet_model != '' else StableDiffusionXLImg2ImgPipeline
         else:
-            pipeline = StableDiffusionControlNetPipeline if self.controlnet_model != '' else StableDiffusionPipeline
+            pipeline = StableDiffusionControlNetImg2ImgPipeline  if self.controlnet_model != '' else StableDiffusionImg2ImgPipeline
 
         return pipeline.from_single_file(**args)
 

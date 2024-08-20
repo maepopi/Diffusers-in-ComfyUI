@@ -274,14 +274,16 @@ class GenerateInpaintImage:
                     positive, 
                     negative, 
                     width, 
-                    height, 
+                    height,
+                    input_image,
+                    mask_image,
+                    mask_invert,
                     controlnet_image=None, 
                     controlnet_scale=None, 
-                    input_image=None, 
-                    mask_image=None,
-                    mask_invert=True):
+                    ):
      
         inpaint_inferer = InpaintInference()
+        print(f' at this stage input image is {input_image}')
         images = inpaint_inferer.infer_image(pipeline, 
                                                   seed, 
                                                   steps, 
@@ -289,12 +291,13 @@ class GenerateInpaintImage:
                                                   positive, 
                                                   negative, 
                                                   width, 
-                                                  height, 
+                                                  height,
+                                                  input_image,
+                                                  mask_image,
+                                                  mask_invert,
                                                   controlnet_image=controlnet_image, 
-                                                  controlnet_scale=controlnet_scale, 
-                                                  input_image=input_image, 
-                                                  mask_image=mask_image, 
-                                                  mask_invert=mask_invert)
+                                                  controlnet_scale=controlnet_scale,  
+                                                  )
         
 
         return (images,)
