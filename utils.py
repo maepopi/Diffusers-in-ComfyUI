@@ -214,8 +214,10 @@ class InpaintPipelineCreator(PipelineCreator):
             args['controlnet'] = ControlNetModel.from_pretrained(self.controlnet_model, torch_dtype=self.torch_dtype, use_safetensors=True)
 
         if self.is_sdxl:
+            print('SDXL pipeline')
             pipeline = StableDiffusionXLControlNetInpaintPipeline if self.controlnet_model != '' else StableDiffusionXLInpaintPipeline
         else:
+            print("SD pipeline")
             pipeline = StableDiffusionControlNetInpaintPipeline if self.controlnet_model != '' else StableDiffusionInpaintPipeline
 
         

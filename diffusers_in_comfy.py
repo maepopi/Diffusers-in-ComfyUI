@@ -49,9 +49,10 @@ class Text2ImgStableDiffusionPipeline:
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": {
-                    "is_sdxl": ("BOOLEAN", {"default": True}),
+                    "model": ("STRING", {"multiline": False}),
+                    "is_sdxl": ("BOOLEAN",),
                     "low_vram": ("BOOLEAN", {"default": True}),
-                    "model": ("FOLDER_PATH", ),
+                    
 
                 },
                 "optional":
@@ -98,10 +99,10 @@ class InpaintingStableDiffusionPipeline:
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": {
-                    "is_sdxl": ("BOOLEAN", {"default": True}),
+                   "model": ("STRING", {"multiline": False}),
+                    "is_sdxl": ("BOOLEAN",),
                     "low_vram": ("BOOLEAN", {"default": True}),
-                    "model": ("FOLDER_PATH", ),
-
+                    
                 },
                 "optional":
                 {
@@ -455,7 +456,7 @@ class LoadModel:
         return {"required": { "ckpt_name": (folder_paths.get_filename_list("checkpoints"), ),
                     }}
 
-    RETURN_TYPES = ("FOLDER_PATH", "BOOLEAN")
+    RETURN_TYPES = ("STRING", "BOOLEAN")
     FUNCTION = "main"
     CATEGORY = "Diffusers-in-Comfy"
 
@@ -476,7 +477,7 @@ class LoadModel:
         out = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=False, output_clip=False, embedding_directory=folder_paths.get_folder_paths("embeddings"))
         is_sdxl = self.test_model(out[0])
 
-        return (ckpt_path, is_sdxl,)
+        return (str(ckpt_path), is_sdxl,)
 
 
 
