@@ -80,7 +80,7 @@ class InpaintInference(ImageInference):
         return (convert_images_to_tensors(images))
     
 class Img2ImgInference(ImageInference):
-    def infer_image(self, pipeline, seed, steps, cfg, positive, negative, width, height, input_image, controlnet_image=None, controlnet_scale=None):
+    def infer_image(self, pipeline, seed, steps, cfg, positive, negative, width, height, input_image, controlnet_image=None, controlnet_scale=None ):
         generator = self.setup_generator(seed)
 
         args = {
