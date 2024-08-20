@@ -1,5 +1,5 @@
-from .utils import PipelineFactory, Text2ImgPipelineCreator, InpaintPipelineCreator
-from .utils import Text2ImageInference, InpaintInference
+from .utils import PipelineFactory, Text2ImgPipelineCreator, Img2ImgPipelineCreator, InpaintPipelineCreator
+from .utils import Text2ImageInference, InpaintInference, Img2ImgInference
 from .utils import convert_images_to_tensors, filter_lora, scale_lora, invert_mask
 from diffusers.utils import load_image
 import folder_paths
@@ -19,6 +19,7 @@ from PIL import Image
 
 # Registering the needed pipelines
 PipelineFactory.register_creator('text2img', Text2ImgPipelineCreator)
+PipelineFactory.register_creator('img2img', Img2ImgPipelineCreator)
 PipelineFactory.register_creator('inpainting', InpaintPipelineCreator)
 
 
@@ -70,7 +71,53 @@ class Text2ImgStableDiffusionPipeline:
         
         return (pipeline,)
 
+class Img2ImgStableDiffusionPipeline:
+    '''
+        This node generates the Stable Diffusion Pipeline for Img2Img.
 
+        Required inputs : 
+            - is_sdxl : whether the loaded model has an SDXL base
+            - low_vram : whether to activate low VRAM options 
+            - model :  the model that has to be instanciated
+
+
+        Optional outputs:
+            - vae : which VAE to use - copy the name of the VAE from Hugging Face
+            - controlnet_model : which ControlNet model to use - copy the name of the ControlNet from Hugging Face
+
+        Ouputs:
+            Pipeline
+    
+    '''
+    def __init__(self) -> None:
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {
+                    "is_sdxl": ("BOOLEAN", {"default": True}),
+                    "low_vram": ("BOOLEAN", {"default": True}),
+                    "model": (folder_paths.get_filename_list("checkpoints"),),
+
+                },
+                "optional":
+                {
+                    "vae": ("STRING", {"multiline": False}),
+                    "controlnet_model" : ("STRING", {"multiline": False}),
+                }
+                }
+
+    RETURN_TYPES = ("PIPELINE",)
+    FUNCTION = "create_img2img_pipeline"
+    CATEGORY = "Diffusers-in-Comfy"
+
+
+    def create_img2img_pipeline(self, is_sdxl, low_vram, model, vae, controlnet_model):
+        factory = PipelineFactory()
+        pipeline = factory.get_pipeline(low_vram, 'img2img', model, vae, controlnet_model, is_sdxl, torch_dtype=torch.float16)
+
+        return (pipeline,)
+    
 class InpaintingStableDiffusionPipeline:
     '''
         This node generates the Stable Diffusion Pipeline for inpainting.
@@ -117,6 +164,7 @@ class InpaintingStableDiffusionPipeline:
         pipeline = factory.get_pipeline(low_vram, 'inpainting', model, vae, controlnet_model, is_sdxl, torch_dtype=torch.float16)
 
         return (pipeline,)
+
 
         
     
@@ -200,15 +248,15 @@ class GenerateInpaintImage:
                     "steps":  ("INT", {"default": 50, "min": 1, "max": 10000}),
                     "width": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
                     "height": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
-                    "cfg": ("FLOAT", {"default": 5.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01}),      
+                    "cfg": ("FLOAT", {"default": 5.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01}),
+                    "input_image" :  ("STRING", {"multiline": True}),
+                    "mask_image" :  ("STRING", {"multiline": True}),
+                    "mask_invert" : ("BOOLEAN",{"default":True}),      
                 },
 
                 "optional": {
                     "controlnet_image" : ("IMAGE",),
                     "controlnet_scale": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step":0.1, "round": 0.01}),
-                    "input_image" :  ("STRING", {"multiline": True}),
-                    "mask_image" :  ("STRING", {"multiline": True}),
-                    "mask_invert" : ("BOOLEAN",{"default":True}),
                     
                 } 
                 }
@@ -247,6 +295,90 @@ class GenerateInpaintImage:
                                                   input_image=input_image, 
                                                   mask_image=mask_image, 
                                                   mask_invert=mask_invert)
+        
+
+        return (images,)
+    
+class GenerateImg2ImgImage:
+    """
+        This class proceeds to the inference of the image based on the pipeline and its components.
+
+        Required inputs:
+            - pipeline : the Stable Diffusion Pipeline
+            - seed : seed for the generation of the image
+            - positive : the positive prompt
+            - negative : the negative prompt
+            - steps : the number of inference steps
+            - width : width of the generated image
+            - height : height of the generated image
+            - cfg : guidance scale
+            - input_image : the image that is going to be used as prompt
+        
+        Optional inputs:
+            - controlnet_image : the image coming out of the Canny Node
+            - controlnet_scale : weight of the canny to control the inferred image
+
+
+        Output:
+            - an image
+    """
+    def __init__(self) -> None:
+        pass
+
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {
+                    "pipeline": ("PIPELINE",),
+                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                    "positive": ("STRING", {"multiline": True}),
+                    "negative": ("STRING", {"multiline": True}),
+                    "steps":  ("INT", {"default": 50, "min": 1, "max": 10000}),
+                    "width": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
+                    "height": ("INT", {"default": 512, "min": 1, "max": 8192, "step": 1}),
+                    "cfg": ("FLOAT", {"default": 5.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01}),
+                    "input_image" :  ("STRING", {"multiline": True}),
+                },
+
+                "optional": {
+                    "controlnet_image" : ("IMAGE",),
+                    "controlnet_scale": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step":0.1, "round": 0.01}),
+                    
+                } 
+                }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("Result",)
+    FUNCTION = "generate_image"
+    CATEGORY = "Diffusers-in-Comfy"
+
+    def generate_image(self, 
+                    pipeline, 
+                    seed, 
+                    steps, 
+                    cfg, 
+                    positive, 
+                    negative, 
+                    width, 
+                    height,
+                    input_image,
+                    controlnet_image=None, 
+                    controlnet_scale=None, 
+                    ):
+     
+        img2img_inferer = Img2ImgInference()
+        images = img2img_inferer.infer_image(pipeline, 
+                                                  seed, 
+                                                  steps, 
+                                                  cfg, 
+                                                  positive, 
+                                                  negative, 
+                                                  width, 
+                                                  height,
+                                                  input_image,
+                                                  controlnet_image=controlnet_image, 
+                                                  controlnet_scale=controlnet_scale, 
+                                                  )
         
 
         return (images,)
@@ -448,9 +580,11 @@ class BLoRALoader:
 
 NODE_CLASS_MAPPINGS = {
     "Text2ImgStableDiffusionPipeline": Text2ImgStableDiffusionPipeline,
+    "Img2ImgStableDiffusionPipeline" : Img2ImgStableDiffusionPipeline,
     "InpaintingStableDiffusionPipeline": InpaintingStableDiffusionPipeline,
     "GenerateTxt2Image" : GenerateText2Image,
     "GenerateInpaintImage": GenerateInpaintImage,
+    "GenerateImg2ImgImage" : GenerateImg2ImgImage,
     "LoRALoader" : LoRALoader,
     "BLoRALoader" : BLoRALoader,
     "MakeCanny": MakeCanny,
@@ -459,9 +593,11 @@ NODE_CLASS_MAPPINGS = {
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "Text2ImgStableDiffusionPipeline" : "Text2ImgStableDiffusionPipeline",
+    "Img2ImgStableDiffusionPipeline" : "Img2ImgStableDiffusionPipeline",
     "InpaintingStableDiffusionPipeline": "InpaintingStableDiffusionPipeline",
     "GenerateTxt2Image" : "GenerateTxt2Image",
     "GenerateInpaintImage": "GenerateInpaintImage",
+    "GenerateImg2ImgImage" : "GenerateImg2ImgImage",
     "LoRALoader" : "LoRALoader",
     "BLoRALoader" : "BLoRALoader",
     "MakeCanny": "MakeCanny",

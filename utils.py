@@ -78,6 +78,34 @@ class InpaintInference(ImageInference):
         images = pipeline(**args).images
 
         return (convert_images_to_tensors(images))
+    
+class Img2ImgInference(ImageInference):
+    def infer_image(self, pipeline, seed, steps, cfg, positive, negative, width, height, input_image, controlnet_image=None, controlnet_scale=None):
+        generator = self.setup_generator(seed)
+
+        args = {
+            "prompt": positive,
+            "generator": generator,
+            "num_inference_steps": steps,
+            "guidance_scale": cfg,
+            "width": width,
+            "height": height,
+        }
+
+        if negative != '':
+            args['negative_prompt'] = negative
+        
+        if controlnet_image:
+            args['control_image'] = controlnet_image
+            args['controlnet_conditioning_scale'] = float(controlnet_scale)
+        
+        if input_image != '':
+            input_image = load_image(input_image)
+            args['image']= input_image
+        
+        images = pipeline(**args).images
+
+        return (convert_images_to_tensors(images))
 
 
 
@@ -173,6 +201,30 @@ class PipelineCreator(ABC):
 class Text2ImgPipelineCreator(PipelineCreator):
     """
         A PipelineCreator dedicated to initizalizing a Text2Img pipeline.
+    """
+            
+    def initialize_pipeline(self):
+        args = {
+            "pretrained_model_link_or_path": folder_paths.get_full_path("checkpoints", self.model),
+            "torch_dtype": self.torch_dtype
+        }
+
+        if self.vae != '':
+            args['vae'] = AutoencoderKL.from_pretrained(self.vae, torch_dtype=self.torch_dtype, use_safetensors=True)
+
+        if self.controlnet_model != '':
+            args['controlnet'] = ControlNetModel.from_pretrained(self.controlnet_model, torch_dtype=self.torch_dtype, use_safetensors=True)
+
+        if self.is_sdxl:
+            pipeline = StableDiffusionXLControlNetPipeline if self.controlnet_model != '' else StableDiffusionXLPipeline
+        else:
+            pipeline = StableDiffusionControlNetPipeline if self.controlnet_model != '' else StableDiffusionPipeline
+
+        return pipeline.from_single_file(**args)
+    
+class Img2ImgPipelineCreator(PipelineCreator):
+    """
+        A PipelineCreator dedicated to initizalizing a Img2Img pipeline.
     """
             
     def initialize_pipeline(self):
