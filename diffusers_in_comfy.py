@@ -7,11 +7,13 @@ import torch
 import numpy as np
 import os
 import cv2
+import comfy.model_base
+import comfy.sd
+
 
 from PIL import Image
 
 '''To do
-- Investigate the model caching
 - Deduce the model architecture, SDXL or SD (see B-Lora Comfy code)
 - change pipeline instanciation
 '''
@@ -49,7 +51,8 @@ class Text2ImgStableDiffusionPipeline:
         return {"required": {
                     "is_sdxl": ("BOOLEAN", {"default": True}),
                     "low_vram": ("BOOLEAN", {"default": True}),
-                    "model": (folder_paths.get_filename_list("checkpoints"),),
+                    "model": ("FOLDER_PATH", ),
+
                 },
                 "optional":
                 {
@@ -97,7 +100,7 @@ class InpaintingStableDiffusionPipeline:
         return {"required": {
                     "is_sdxl": ("BOOLEAN", {"default": True}),
                     "low_vram": ("BOOLEAN", {"default": True}),
-                    "model": (folder_paths.get_filename_list("checkpoints"),),
+                    "model": ("FOLDER_PATH", ),
 
                 },
                 "optional":
@@ -443,6 +446,40 @@ class BLoRALoader:
         return (pipeline,)
 
 
+class LoadModel:
+    def __init__(self) -> None:
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": { "ckpt_name": (folder_paths.get_filename_list("checkpoints"), ),
+                    }}
+
+    RETURN_TYPES = ("FOLDER_PATH", "BOOLEAN")
+    FUNCTION = "main"
+    CATEGORY = "Diffusers-in-Comfy"
+
+    def test_model(self, model):
+        is_sdxl = isinstance(model.model, comfy.model_base.SDXL)
+
+        if is_sdxl:
+            print('the model is SDXL')
+        else:
+            print('the model is not sdxl')
+
+        return is_sdxl
+
+
+
+    def main(self, ckpt_name):
+        ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
+        out = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=False, output_clip=False, embedding_directory=folder_paths.get_folder_paths("embeddings"))
+        is_sdxl = self.test_model(out[0])
+
+        return (ckpt_path, is_sdxl,)
+
+
+
 
     
 
@@ -454,6 +491,7 @@ NODE_CLASS_MAPPINGS = {
     "LoRALoader" : LoRALoader,
     "BLoRALoader" : BLoRALoader,
     "MakeCanny": MakeCanny,
+    "LoadModel" : LoadModel,
 
 }
 
@@ -465,5 +503,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "LoRALoader" : "LoRALoader",
     "BLoRALoader" : "BLoRALoader",
     "MakeCanny": "MakeCanny",
+    "LoadModel" : "LoadModel",
    
 }

@@ -170,6 +170,7 @@ class PipelineCreator(ABC):
     def initialize_pipeline(self):
         raise NotImplementedError
     
+    
 class Text2ImgPipelineCreator(PipelineCreator):
     """
         A PipelineCreator dedicated to initizalizing a Text2Img pipeline.
@@ -177,9 +178,10 @@ class Text2ImgPipelineCreator(PipelineCreator):
             
     def initialize_pipeline(self):
         args = {
-            "pretrained_model_link_or_path": folder_paths.get_full_path("checkpoints", self.model),
+            "pretrained_model_link_or_path": self.model,
             "torch_dtype": self.torch_dtype
         }
+
 
         if self.vae != '':
             args['vae'] = AutoencoderKL.from_pretrained(self.vae, torch_dtype=self.torch_dtype, use_safetensors=True)
@@ -201,7 +203,7 @@ class InpaintPipelineCreator(PipelineCreator):
             
     def initialize_pipeline(self):
         args = {
-            "pretrained_model_link_or_path": folder_paths.get_full_path("checkpoints", self.model),
+            "pretrained_model_link_or_path": self.model,
             "torch_dtype": self.torch_dtype
         }
 
@@ -216,6 +218,8 @@ class InpaintPipelineCreator(PipelineCreator):
         else:
             pipeline = StableDiffusionControlNetInpaintPipeline if self.controlnet_model != '' else StableDiffusionInpaintPipeline
 
+        
+    
         return pipeline.from_single_file(**args)
 
 
