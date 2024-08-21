@@ -302,7 +302,7 @@ class GenerateInpaintImage:
 
         return (images,)
     
-class GenerateImg2ImgImage:
+class GenerateImg2Image:
     """
         This class proceeds to the inference of the image based on the pipeline and its components.
 
@@ -587,7 +587,7 @@ NODE_CLASS_MAPPINGS = {
     "InpaintingStableDiffusionPipeline": InpaintingStableDiffusionPipeline,
     "GenerateTxt2Image" : GenerateText2Image,
     "GenerateInpaintImage": GenerateInpaintImage,
-    "GenerateImg2ImgImage" : GenerateImg2ImgImage,
+    "GenerateImg2Image" : GenerateImg2Image,
     "LoRALoader" : LoRALoader,
     "BLoRALoader" : BLoRALoader,
     "MakeCanny": MakeCanny,
@@ -600,7 +600,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "InpaintingStableDiffusionPipeline": "InpaintingStableDiffusionPipeline",
     "GenerateTxt2Image" : "GenerateTxt2Image",
     "GenerateInpaintImage": "GenerateInpaintImage",
-    "GenerateImg2ImgImage" : "GenerateImg2ImgImage",
+    "GenerateImg2Image" : "GenerateImg2Image",
     "LoRALoader" : "LoRALoader",
     "BLoRALoader" : "BLoRALoader",
     "MakeCanny": "MakeCanny",
