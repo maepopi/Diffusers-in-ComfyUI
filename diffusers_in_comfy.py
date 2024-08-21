@@ -61,7 +61,7 @@ class Text2ImgStableDiffusionPipeline:
 
     RETURN_TYPES = ("PIPELINE",)
     FUNCTION = "create_text2img_pipeline"
-    CATEGORY = "Diffusers-in-Comfy"
+    CATEGORY = "Diffusers-in-Comfy/Pipelines"
 
 
     def create_text2img_pipeline(self, is_sdxl, low_vram, model, vae, controlnet_model):
@@ -109,7 +109,7 @@ class Img2ImgStableDiffusionPipeline:
 
     RETURN_TYPES = ("PIPELINE",)
     FUNCTION = "create_img2img_pipeline"
-    CATEGORY = "Diffusers-in-Comfy"
+    CATEGORY = "Diffusers-in-Comfy/Pipelines"
 
 
     def create_img2img_pipeline(self, is_sdxl, low_vram, model, vae, controlnet_model):
@@ -156,7 +156,7 @@ class InpaintingStableDiffusionPipeline:
 
     RETURN_TYPES = ("PIPELINE",)
     FUNCTION = "create_inpaint_pipeline"
-    CATEGORY = "Diffusers-in-Comfy"
+    CATEGORY = "Diffusers-in-Comfy/Pipelines"
 
 
     def create_inpaint_pipeline(self, is_sdxl, low_vram, model, vae, controlnet_model):
@@ -198,7 +198,7 @@ class MakeCanny:
     RETURN_TYPES = ("IMAGE", "IMAGE")
     RETURN_NAMES = ("Canny", "Canny Preview")
     FUNCTION = "create_canny"
-    CATEGORY = "Diffusers-in-Comfy"
+    CATEGORY = "Diffusers-in-Comfy/Utils"
 
 
     def create_canny(self, image_path, low_threshold, high_threshold):
@@ -264,7 +264,7 @@ class GenerateInpaintImage:
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("Result",)
     FUNCTION = "generate_image"
-    CATEGORY = "Diffusers-in-Comfy"
+    CATEGORY = "Diffusers-in-Comfy/Inference"
 
     def generate_image(self, 
                     pipeline, 
@@ -353,7 +353,7 @@ class GenerateImg2ImgImage:
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("Result",)
     FUNCTION = "generate_image"
-    CATEGORY = "Diffusers-in-Comfy"
+    CATEGORY = "Diffusers-in-Comfy/Inference"
 
     def generate_image(self, 
                     pipeline, 
@@ -433,7 +433,7 @@ class GenerateText2Image:
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("Result",)
     FUNCTION = "generate_image"
-    CATEGORY = "Diffusers-in-Comfy"
+    CATEGORY = "Diffusers-in-Comfy/Inference"
 
     def generate_image(self, 
                     pipeline, 
@@ -490,7 +490,7 @@ class LoRALoader:
     
     RETURN_TYPES = ("PIPELINE",) 
     FUNCTION = "load_lora"
-    CATEGORY = "Diffusers-in-Comfy"
+    CATEGORY = "Diffusers-in-Comfy/Components"
 
     def load_lora(self, pipeline, lora_name, lora_scale):
         lora_path = folder_paths.get_full_path("loras", lora_name)
@@ -538,7 +538,7 @@ class BLoRALoader:
     
     RETURN_TYPES = ("PIPELINE",) 
     FUNCTION = "load_b_lora_to_unet"
-    CATEGORY = "Diffusers-in-Comfy"
+    CATEGORY = "Diffusers-in-Comfy/Components"
 
     
 
