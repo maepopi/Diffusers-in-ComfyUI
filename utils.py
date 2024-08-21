@@ -179,8 +179,10 @@ class PipelineFactory:
             pipeline.enable_xformers_memory_efficient_attention()
             pipeline.enable_model_cpu_offload()
 
-        device = 'cpu' if self or not torch.cuda.is_available() else 'cuda'
+        device = 'cpu' if low_vram or not torch.cuda.is_available() else 'cuda'
         pipeline = pipeline.to(device)
+
+        print(f'pipeline is set to {device}')
 
         return pipeline
     
