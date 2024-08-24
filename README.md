@@ -53,10 +53,10 @@ If you want to do everything from scratch and don't even have Comfy UI install, 
 
 ## Pipeline nodes
 Under "Diffusers-in-Comfy/Pipelines", you will find one node per Diffuser pipeline. **Text2ImgStableDiffusionPipeline**, **Img2ImgStableDiffusionPipeline**, and **InpaintingStableDiffusionPipeline**. Inside each one, you can precise :
-- Whether you want to use SDXL
-- Whether you want to use a VAE
-- Whether you want to use a ControlNet
-- Whether you want to activate low VRAM options to avoid low GPU memory issues.
+- Whether you want to use SDXL 
+- Whether you want to use a VAE (write the Hugging Face path to your VAE, for example : "stabilityai/sd-vae-ft-mse")
+- Whether you want to use a ControlNet (write the Hugging Face path to your Controlnet model, for example : "XLabs-AI/flux-controlnet-canny")
+- Whether you want to activate low VRAM options to avoid low GPU memory issues (this will notably send your pipeline to CPU and activate xformers memory efficient attention)
 
 ## Inference nodes
 Similarly as for pipelines, under "Diffusers-in-Comfy/Inference", you will find one node per type of inference pipeline you want to use : **GenerateTxt2Image**, **GenerateInpaintImage**, or **GenerateImg2Image**. The three of them have common options you can tweak:
@@ -77,14 +77,14 @@ Then you have specific inputs per node.
 **GenerateImg2Image** : In this node, you must write the path to an input image to use as a prompt. Be careful to delete all quotes in the path.
 
 ## Utils nodes
-Under "Diffusers-in-Comfy/Utils", you will find nodes that will allow you to make different operations, such as processing images. For now, only one is available : **Make Canny**. It takes in an image, transforms it into a canny, and then you can connect the output canny to the "controlnet_image" input of one of the Inference nodes. 
+Under "Diffusers-in-Comfy/Utils", you will find nodes that will allow you to make different operations, such as processing images. For now, only one is available : **Make Canny**. It takes in an image, transforms it into a canny, and then you can connect the output canny to the "controlnet_image" input of one of the Inference nodes. You also have a second output "Preview" that you can connect to Comfy UI's "Preview Image" to see how your canny looks.
 
 ## Component nodes
-Under "Diffusers-in-Comfy/Components", you will find Diffusers components and adapters that you can load into the UNET. For now, two are available.
+Under "Diffusers-in-Comfy/Components", you will find Diffusers components and adapters that you can load into the Unet. For now, two are available.
 
 **LoraLoader** : This node allows you to load a LoRA into the UNET and define its weight. Don't forget to write the triggerword into the prompt of the Inference node.
 
-**Blora** : This node is the reason why I originally created this project. It implements a technique that allows for separating an image into its style and content. It acts as a LoRA but works a bit differently. Here's the (original repo)[https://github.com/yardenfren1996/B-LoRA]. Keep in mind that although a B-LoRA works well with a ControlNet, it cannot be used with a classic LoRA. Indeed, the classic LoRA will completely dilute the B-LoRA, supplanting it into the Unet.
+**Blora** : This node is the reason why I originally created this project. It implements a technique that allows for separating an image into its style and content. It acts as a LoRA but works a bit differently (it updates only two blocks of the Unet). Here's the [original repo](https://github.com/yardenfren1996/B-LoRA). Keep in mind that although a B-LoRA works well with a ControlNet, it cannot be used with a classic LoRA. Indeed, the classic LoRA will completely dilute the B-LoRA, supplanting it into the Unet. Also, B-LoRAS work **only** with SDXL models, so make sure you load a SDXL Pipeline and put the is_sdxl flag of the Pipeline node to "True"!
 
 
 # To do
