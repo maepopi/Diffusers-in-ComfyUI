@@ -1,3 +1,4 @@
 *.pyc
 tests.ipynb
 .github/workflows/publish.yml
+pyproject.toml

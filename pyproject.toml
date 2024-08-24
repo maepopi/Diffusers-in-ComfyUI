@@ -10,6 +10,6 @@ Repository = "https://github.com/maepopi/Diffusers-in-ComfyUI"
 #  Used by Comfy Registry https://comfyregistry.org
 
 [tool.comfy]
-PublisherId = ""
+PublisherId = "drjusseaux"
 DisplayName = "Diffusers-in-ComfyUI"
 Icon = ""
