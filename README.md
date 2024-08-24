@@ -6,6 +6,7 @@ This work is greatly inspired by this [repository](https://github.com/Limitex/Co
 # Installation
 ## From Comfy Registry
 This node has been added to Comfy Registry (a big thank you to the team for letting me in!). You can install it using Comfy-CLI:
+
 ```comfy node registry-install diffusers-in-comfyui```
 
 ## From ComfyUI Manager
