@@ -4,6 +4,16 @@ This is a custom node allowing the use of the diffusers pipeline into ComfyUI.
 This work is greatly inspired by this [repository](https://github.com/Limitex/ComfyUI-Diffusers). I decided to recode it from scratch mainly for learning purposes, as well as because at first I only needed a portion of the code. I thank them for this opportunity to learn!
 
 # Installation
+## From Comfy Registry
+This node has been added to Comfy Registry (a big thank you to the team for letting me in!). You can install it using Comfy-CLI:
+```comfy node registry-install diffusers-in-comfyui```
+
+## From ComfyUI Manager
+I was allowed to add this node to ComfyUI Manager's list of custom nodes (thank you Itdrdata!). So once you have launched Comfy UI, go into the UI Manager and search through the available custom nodes for "Diffusers in Comfy UI", and install it.
+
+## From scratch
+If you want to do everything from scratch and don't even have Comfy UI install, here's what to do .
+
 1. Create a conda environment with Python 3.9
 2. Activate your environment
 3. Then clone [ComfyUI](https://github.com/comfyanonymous/ComfyUI) repository
@@ -78,7 +88,9 @@ Under "Diffusers-in-Comfy/Components", you will find Diffusers components and ad
 
 # To do
 There are quite a few things I'd like to develop further, so here's a very basic roadmap
+- Implement support for IPAdapters
 - I don't really like that you have to choose whether your loaded model is SDXL or not. Ideally, I'd like the algo to piggyback on ComfyAPI to determine the architecture automatically.
 - I'd like to give the possibility to either load a model locally, or remotely, by writing the path and then maybe add an option to specify whether it's a URL or a local path. Yet this potentially complicates the detection of the architecture, I need to dig deeper into Comfy API to pull this out.
+- I'd like the user to be able to browse to the images they want to use, and not have to write the path. For now, I used the path because it allowed me to avoid dealing with Comfy's internal way of processing and handling images.
 - A small but important QOL improvement : in all paths written in the inputs, detect and delete quotes
 - Test more research papers and implement them as new nodes 😊
