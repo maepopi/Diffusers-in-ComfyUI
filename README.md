@@ -34,6 +34,8 @@ This work is greatly inspired by this [repository](https://github.com/Limitex/Co
 
 10. Launch ComfyUI
 
+11. You should find the nodes under "Diffusers-in-Comfy"!
+
 
 
 # Nodes
