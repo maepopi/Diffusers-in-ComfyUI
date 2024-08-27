@@ -494,7 +494,7 @@ class LoRALoader:
 
     def load_lora(self, pipeline, lora_name, lora_scale):
         lora_path = folder_paths.get_full_path("loras", lora_name)
-        lora_name = os.path.splitext(lora_name)[0]
+        lora_name = os.path.splitext(lora_name)[0] # to remove the extension from the name
         pipeline.load_lora_weights(lora_path, adapter_name=lora_name)
         pipeline.set_adapters([lora_name], adapter_weights=[lora_scale])
 

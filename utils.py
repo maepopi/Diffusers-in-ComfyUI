@@ -12,10 +12,11 @@ import folder_paths
 from PIL import Image, ImageOps
 from abc import ABC, abstractmethod
 
-class ImageInference:
+class ImageInference(ABC):
     def setup_generator(self, seed):
         return torch.Generator(device='cuda').manual_seed(seed)
 
+    @abstractmethod
     def infer_image(self, **kwargs):
         raise NotImplementedError
 
