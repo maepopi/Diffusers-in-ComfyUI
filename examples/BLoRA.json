@@ -1,0 +1,199 @@
+{
+  "last_node_id": 6,
+  "last_link_id": 4,
+  "nodes": [
+    {
+      "id": 5,
+      "type": "PreviewImage",
+      "pos": [
+        -2041.0313720703125,
+        733.3960571289062
+      ],
+      "size": [
+        210,
+        246
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 2
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 1,
+      "type": "Text2ImgStableDiffusionPipeline",
+      "pos": [
+        -3376.4130859375,
+        578.3900756835938
+      ],
+      "size": [
+        390.5999755859375,
+        154
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "PIPELINE",
+          "type": "PIPELINE",
+          "links": [
+            3
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Text2ImgStableDiffusionPipeline"
+      },
+      "widgets_values": [
+        true,
+        true,
+        "sd_xl_base_1.0.safetensors",
+        "",
+        ""
+      ]
+    },
+    {
+      "id": 4,
+      "type": "GenerateTxt2Image",
+      "pos": [
+        -2533.815185546875,
+        681.9490356445312
+      ],
+      "size": [
+        400,
+        314
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pipeline",
+          "type": "PIPELINE",
+          "link": 4
+        },
+        {
+          "name": "controlnet_image",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Result",
+          "type": "IMAGE",
+          "links": [
+            2
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GenerateTxt2Image"
+      },
+      "widgets_values": [
+        42,
+        "fixed",
+        "[v2] style, a cat sleeping on a pillow",
+        "",
+        49,
+        1024,
+        1024,
+        5,
+        0.5
+      ]
+    },
+    {
+      "id": 6,
+      "type": "BLoRALoader",
+      "pos": [
+        -2905.48681640625,
+        634.6033325195312
+      ],
+      "size": [
+        352.2727355957031,
+        130
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pipeline",
+          "type": "PIPELINE",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "PIPELINE",
+          "type": "PIPELINE",
+          "links": [
+            4
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BLoRALoader"
+      },
+      "widgets_values": [
+        "vangogh.safetensors",
+        1.1,
+        "",
+        0
+      ]
+    }
+  ],
+  "links": [
+    [
+      2,
+      4,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      3,
+      1,
+      0,
+      6,
+      0,
+      "PIPELINE"
+    ],
+    [
+      4,
+      6,
+      0,
+      4,
+      0,
+      "PIPELINE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.1,
+      "offset": [
+        3448.213506348067,
+        -454.2056709686145
+      ]
+    }
+  },
+  "version": 0.4
+}

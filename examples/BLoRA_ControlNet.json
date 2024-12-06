@@ -1,0 +1,284 @@
+{
+  "last_node_id": 9,
+  "last_link_id": 6,
+  "nodes": [
+    {
+      "id": 5,
+      "type": "PreviewImage",
+      "pos": [
+        -2041.0313720703125,
+        733.3960571289062
+      ],
+      "size": [
+        210,
+        246
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 2
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 9,
+      "type": "PreviewImage",
+      "pos": [
+        -3078.213623046875,
+        1055.512451171875
+      ],
+      "size": [
+        210,
+        246
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 5
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 7,
+      "type": "MakeCanny",
+      "pos": [
+        -3590.941650390625,
+        848.2393798828125
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "Canny",
+          "type": "IMAGE",
+          "links": [
+            6
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "Canny Preview",
+          "type": "IMAGE",
+          "links": [
+            5
+          ],
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MakeCanny"
+      },
+      "widgets_values": [
+        "/home/maelys/Downloads/hf-logo.png",
+        200,
+        100
+      ]
+    },
+    {
+      "id": 6,
+      "type": "BLoRALoader",
+      "pos": [
+        -3020.941162109375,
+        602.78515625
+      ],
+      "size": [
+        315,
+        130
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pipeline",
+          "type": "PIPELINE",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "PIPELINE",
+          "type": "PIPELINE",
+          "links": [
+            4
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BLoRALoader"
+      },
+      "widgets_values": [
+        "vangogh.safetensors",
+        1.1,
+        "",
+        0
+      ]
+    },
+    {
+      "id": 1,
+      "type": "Text2ImgStableDiffusionPipeline",
+      "pos": [
+        -3585.504150390625,
+        575.6626586914062
+      ],
+      "size": [
+        390.5999755859375,
+        154
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "PIPELINE",
+          "type": "PIPELINE",
+          "links": [
+            3
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Text2ImgStableDiffusionPipeline"
+      },
+      "widgets_values": [
+        true,
+        true,
+        "sd_xl_base_1.0.safetensors",
+        "",
+        "diffusers/controlnet-canny-sdxl-1.0"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "GenerateTxt2Image",
+      "pos": [
+        -2533.815185546875,
+        681.9490356445312
+      ],
+      "size": [
+        400,
+        314
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pipeline",
+          "type": "PIPELINE",
+          "link": 4
+        },
+        {
+          "name": "controlnet_image",
+          "type": "IMAGE",
+          "link": 6,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Result",
+          "type": "IMAGE",
+          "links": [
+            2
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GenerateTxt2Image"
+      },
+      "widgets_values": [
+        42,
+        "fixed",
+        "A cat sleeping on a pillow",
+        "",
+        49,
+        1024,
+        1024,
+        5,
+        0.5
+      ]
+    }
+  ],
+  "links": [
+    [
+      2,
+      4,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      3,
+      1,
+      0,
+      6,
+      0,
+      "PIPELINE"
+    ],
+    [
+      4,
+      6,
+      0,
+      4,
+      0,
+      "PIPELINE"
+    ],
+    [
+      5,
+      7,
+      1,
+      9,
+      0,
+      "IMAGE"
+    ],
+    [
+      6,
+      7,
+      0,
+      4,
+      1,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.9090909090909091,
+      "offset": [
+        3705.3316881662513,
+        -443.53294369588775
+      ]
+    }
+  },
+  "version": 0.4
+}
