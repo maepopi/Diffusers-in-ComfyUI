@@ -94,4 +94,5 @@ There are quite a few things I'd like to develop further, so here's a very basic
 - I'd like to give the possibility to either load a model locally, or remotely, by writing the path and then maybe add an option to specify whether it's a URL or a local path. Yet this potentially complicates the detection of the architecture, I need to dig deeper into Comfy API to pull this out.
 - I'd like the user to be able to browse to the images they want to use, and not have to write the path. For now, I used the path because it allowed me to avoid dealing with Comfy's internal way of processing and handling images.
 - A small but important QOL improvement : in all paths written in the inputs, detect and delete quotes
+- Implement automatic fetching of the B-LoRAs in the "lora" subfolder, instead oh having to write the name + extension (for example "vangogh.safetensors")
 - Test more research papers and implement them as new nodes 😊
