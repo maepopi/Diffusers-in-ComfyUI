@@ -49,7 +49,7 @@ class Text2ImgStableDiffusionPipeline:
     def INPUT_TYPES(cls):
         return {"required": {
                     "is_sdxl": ("BOOLEAN", {"default": True}),
-                    "low_vram": ("BOOLEAN", {"default": True}),
+                    "low_vram": ("BOOLEAN", {"default": False}),
                     "model": (folder_paths.get_filename_list("checkpoints"),),
                 },
                 "optional":
@@ -96,7 +96,7 @@ class Img2ImgStableDiffusionPipeline:
     def INPUT_TYPES(cls):
         return {"required": {
                     "is_sdxl": ("BOOLEAN", {"default": True}),
-                    "low_vram": ("BOOLEAN", {"default": True}),
+                    "low_vram": ("BOOLEAN", {"default": False}),
                     "model": (folder_paths.get_filename_list("checkpoints"),),
 
                 },
@@ -143,7 +143,7 @@ class InpaintingStableDiffusionPipeline:
     def INPUT_TYPES(cls):
         return {"required": {
                     "is_sdxl": ("BOOLEAN", {"default": True}),
-                    "low_vram": ("BOOLEAN", {"default": True}),
+                    "low_vram": ("BOOLEAN", {"default": False}),
                     "model": (folder_paths.get_filename_list("checkpoints"),),
 
                 },

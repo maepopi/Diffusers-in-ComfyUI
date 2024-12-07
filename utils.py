@@ -177,7 +177,6 @@ class PipelineFactory:
                 The pipeline set to hardware.
         """
         if low_vram:
-            pipeline.enable_xformers_memory_efficient_attention()
             pipeline.enable_model_cpu_offload()
 
         device = 'cpu' if low_vram or not torch.cuda.is_available() else 'cuda'
