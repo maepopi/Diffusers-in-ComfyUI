@@ -13,39 +13,24 @@ This node has been added to Comfy Registry (a big thank you to the team for lett
 I was allowed to add this node to ComfyUI Manager's list of custom nodes (thank you Itdrdata!). So once you have launched Comfy UI, go into the UI Manager and search through the available custom nodes for "Diffusers in Comfy UI", and install it.
 
 ## From scratch
-If you want to do everything from scratch and don't even have Comfy UI install, here's what to do .
+
+If you want to do everything from scratch and don't even have Comfy UI install, here's what to do. You can follow these steps in **Windows**, **WSL** or **Linux**. 
 
 1. Create a conda environment with Python 3.9
+
 2. Activate your environment
+
 3. Then clone [ComfyUI](https://github.com/comfyanonymous/ComfyUI) repository
 
-4. Follow ComfyUI installation instructions:
+4. Follow ComfyUI installation instructions
 
-    ```pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu121```
+5. Clone this repo into ComfyUI/custom-nodes and "cd" into it
 
-    ```pip install -r https://raw.githubusercontent.com/comfyanonymous/ComfyUI/master/requirements.txt```
+6. Install this repo's requirelments
 
-5. Install Diffusers API 
+7. Launch ComfyUI
 
-    ```pip install git+https://github.com/huggingface/diffusers```
-
-6. Install accelerate
-
-    ```pip install accelerate```
-
-7. Configure your acceleration
-
-    ```accelerate config```
-
-8. Install remaining missing packages
-
-    ```pip install xformers opencv-python peft omegaconf```
-
-9. Navigate to ComfyUI/custom-nodes, and clone this repo inside
-
-10. Launch ComfyUI
-
-11. You should find the nodes under "Diffusers-in-Comfy"!
+8. You should find the nodes under "Diffusers-in-Comfy"!
 
 
 
