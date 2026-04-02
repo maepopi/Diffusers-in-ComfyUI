@@ -178,6 +178,4 @@ This project is [MIT](LICENSE) licensed.
 
 <div align="center">
 Made with ❤️ for the ComfyUI community
-<br><br>
-<sub>README documentation written with assistance from Claude AI</sub>
 </div>
