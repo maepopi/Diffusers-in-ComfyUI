@@ -1,4 +1,5 @@
 diffusers @ git+https://github.com/huggingface/diffusers@6131a93b969f87d171148bd367fd9990d5a49b6b
 opencv-python==4.10.0.84
 peft==0.14.0
-omegaconf==2.3.0
+torchvision
+transformers<5
