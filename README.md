@@ -1,6 +1,8 @@
 # 🎨 Diffusers in ComfyUI
 
 > Bring the full power of Hugging Face Diffusers pipelines directly into ComfyUI
+>
+> **Why?** ComfyUI's built-in nodes are limited to specific model architectures. This plugin lets you use *any* HuggingFace Diffusers pipeline — including new models the day they're released — with full ControlNet, LoRA, and B-LoRA support.
 
 [![Available in ComfyUI Manager](https://img.shields.io/badge/ComfyUI_Manager-Available-brightgreen)](https://github.com/ltdrdata/ComfyUI-Manager)
 [![Comfy Registry](https://img.shields.io/badge/Comfy_Registry-Listed-blue)](https://registry.comfy.org/)
@@ -154,28 +156,10 @@ This project was inspired by [ComfyUI-Diffusers](https://github.com/Limitex/Comf
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-Contributions, issues, and feature requests are welcome!
+Contributions, issues, and feature requests are welcome — check the [issues page](https://github.com/maepopi/Diffusers-in-ComfyUI/issues) or submit PRs.
 
-Feel free to check the [issues page](https://github.com/maepopi/Diffusers-in-ComfyUI/issues) or submit PRs.
+## License
 
----
-
-## 📝 License
-
-This project is [MIT](LICENSE) licensed.
-
----
-
-## 💬 Contact & Support
-
-- 🐛 [Report a bug](https://github.com/maepopi/Diffusers-in-ComfyUI/issues)
-- 💡 [Request a feature](https://github.com/maepopi/Diffusers-in-ComfyUI/issues)
-- ⭐ [Star this repo](https://github.com/maepopi/Diffusers-in-ComfyUI) if you find it useful!
-
----
-
-<div align="center">
-Made with ❤️ for the ComfyUI community
-</div>
+[MIT](LICENSE)
